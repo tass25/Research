@@ -1,0 +1,55 @@
+# This is a grammar definition (like a blueprint) for parsing logical and arithmetic expressions
+
+?start: rule
+
+# A rule is a disjunction (OR of conjunctions)
+?rule: disjunction
+
+# A disjunction is either:
+# - another disjunction OR a conjunction (left-recursive)
+# - or just a single conjunction
+?disjunction: disjunction OR conjunction
+            | conjunction
+
+# A conjunction is either:
+# - another conjunction AND a relation
+# - or just a single relation
+?conjunction: conjunction AND relation
+             | relation
+
+# A relation compares two expressions using relational operators
+?relation: expression ROP expression
+
+# An expression can be:
+# - another expression with an arithmetic operator (like +, -, *, /)
+# - a variable
+# - a number
+# - or parentheses around an expression
+?expression: expression AOP expression
+           | VARIABLE
+           | NUMBER
+           | "(" expression ")"
+
+# Tokens for logical operators
+AND: "∧"
+OR: "∨"
+
+# Tokens for relational operators
+ROP: "<" | "<=" | ">" | ">=" | "=" | "!="
+
+# Tokens for arithmetic operators
+AOP: "+" | "-" | "*" | "/"
+
+# Allowed variable names
+VARIABLE: "ego_speed"
+        | "dist_front"
+        | "lane_offset"
+        | "rel_speed"
+
+# Numbers can be positive or negative
+NUMBER: SIGNED_NUMBER
+
+# Import common definitions for signed numbers and whitespace
+%import common.SIGNED_NUMBER
+%import common.WS
+%ignore WS  # Ignore spaces and tabs
