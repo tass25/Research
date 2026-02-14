@@ -1,55 +1,45 @@
-# This is a grammar definition (like a blueprint) for parsing logical and arithmetic expressions
+// Grammar for operational safety rules
 
 ?start: rule
 
-# A rule is a disjunction (OR of conjunctions)
 ?rule: disjunction
 
-# A disjunction is either:
-# - another disjunction OR a conjunction (left-recursive)
-# - or just a single conjunction
+// Disjunction: c1 ∨ c2 ∨ ...
 ?disjunction: disjunction OR conjunction
             | conjunction
 
-# A conjunction is either:
-# - another conjunction AND a relation
-# - or just a single relation
+// Conjunction: p1 ∧ p2 ∧ ...
 ?conjunction: conjunction AND relation
              | relation
 
-# A relation compares two expressions using relational operators
+// Relation: expr rop expr OR grouped disjunction
 ?relation: expression ROP expression
+         | "(" disjunction ")"  -> grouped_rule
 
-# An expression can be:
-# - another expression with an arithmetic operator (like +, -, *, /)
-# - a variable
-# - a number
-# - or parentheses around an expression
-?expression: expression AOP expression
-           | VARIABLE
-           | NUMBER
-           | "(" expression ")"
+// Expression: arithmetic operations
+?expression: expression AOP term
+           | term
 
-# Tokens for logical operators
-AND: "∧"
-OR: "∨"
+?term: VARIABLE
+     | NUMBER
+     | "(" expression ")"
 
-# Tokens for relational operators
+// Logical operators
+AND: "∧" | "AND"
+OR: "∨" | "OR"
+
+// Relational operators
 ROP: "<" | "<=" | ">" | ">=" | "=" | "!="
 
-# Tokens for arithmetic operators
+// Arithmetic operators
 AOP: "+" | "-" | "*" | "/"
 
-# Allowed variable names
-VARIABLE: "ego_speed"
-        | "dist_front"
-        | "lane_offset"
-        | "rel_speed"
+// Variables
+VARIABLE: /[a-z_][a-z0-9_]*/
 
-# Numbers can be positive or negative
+// Numbers
 NUMBER: SIGNED_NUMBER
 
-# Import common definitions for signed numbers and whitespace
 %import common.SIGNED_NUMBER
 %import common.WS
-%ignore WS  # Ignore spaces and tabs
+%ignore WS

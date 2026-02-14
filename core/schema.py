@@ -1,49 +1,50 @@
-# Importing modules we need
+"""
+Strongly-typed grammar schema for operational rules.
+
+Implements the BNF grammar as Python dataclasses with proper type support
+for nested structures.
+"""
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Union
 from core.types import RelOp, ArithOp
 
 
-# Base class for all expressions
-# An "expression" can be a number, variable, or a calculation
 class Expr:
+    """Base class for all expressions."""
     def evaluate(self, env: Dict[str, float]) -> float:
         raise NotImplementedError
 
 
-# Represents a variable, like x or y
 @dataclass(frozen=True)
 class Variable(Expr):
-    name: str  # The name of the variable
+    """A variable reference (e.g., ego_speed, dist_front)."""
+    name: str
 
     def evaluate(self, env: Dict[str, float]) -> float:
-        # To evaluate a variable, we look up its value in the environment dictionary
+        if self.name not in env:
+            raise KeyError(f"Variable '{self.name}' not in environment")
         return env[self.name]
 
 
-# Represents a constant number, like 5 or 3.14
 @dataclass(frozen=True)
 class Constant(Expr):
-    value: float  # The numeric value
+    """A numeric constant (e.g., 5.0, 3.14)."""
+    value: float
 
     def evaluate(self, env: Dict[str, float]) -> float:
-        # Constants evaluate to themselves
         return self.value
 
 
-# Represents a binary operation (like addition, subtraction, multiplication, division)
 @dataclass(frozen=True)
 class BinaryExpr(Expr):
-    left: Expr    # Left side of the operation (can be a Variable, Constant, or another BinaryExpr)
-    op: ArithOp   # The arithmetic operation to perform (+, -, *, /)
-    right: Expr   # Right side of the operation
+    """Binary arithmetic expression (e.g., speed * 2)."""
+    left: Expr
+    op: ArithOp
+    right: Expr
 
     def evaluate(self, env: Dict[str, float]) -> float:
-        # First, evaluate both sides recursively
         l, r = self.left.evaluate(env), self.right.evaluate(env)
-
-        # Perform the operation based on 'op'
         if self.op == ArithOp.ADD:
             return l + r
         if self.op == ArithOp.SUB:
@@ -51,55 +52,59 @@ class BinaryExpr(Expr):
         if self.op == ArithOp.MUL:
             return l * r
         if self.op == ArithOp.DIV:
+            if r == 0:
+                raise ZeroDivisionError("Division by zero in expression")
             return l / r
-
-        # If we get an unknown operation, raise an error
-        raise ValueError("Unknown arithmetic operator")
+        raise ValueError(f"Unknown arithmetic operator: {self.op}")
 
 
-# Represents a comparison between two expressions (like x > 5)
 @dataclass(frozen=True)
 class Relation:
-    left: Expr   # Left expression
-    op: RelOp    # Relational operator (<, <=, >, >=, ==, !=)
-    right: Expr  # Right expression
+    """Relational predicate (e.g., ego_speed > 5)."""
+    left: Expr
+    op: RelOp
+    right: Expr
 
     def evaluate(self, env: Dict[str, float]) -> bool:
-        # Evaluate both sides
         l, r = self.left.evaluate(env), self.right.evaluate(env)
-
-        # Return the result of the comparison
         return {
-            RelOp.LT: l < r,   # less than
-            RelOp.LE: l <= r,  # less than or equal
-            RelOp.GT: l > r,   # greater than
-            RelOp.GE: l >= r,  # greater than or equal
-            RelOp.EQ: l == r,  # equal
-            RelOp.NE: l != r,  # not equal
+            RelOp.LT: l < r,
+            RelOp.LE: l <= r,
+            RelOp.GT: l > r,
+            RelOp.GE: l >= r,
+            RelOp.EQ: l == r,
+            RelOp.NE: l != r,
         }[self.op]
 
 
-# Represents an AND of multiple relations
-# For example: (x > 1 AND y < 5)
+# Forward reference for recursive types
+PredicateItem = Union[Relation, 'Conjunction']
+ClauseItem = Union[Relation, 'Conjunction']
+
+
 @dataclass(frozen=True)
 class Conjunction:
-    relations: List[Relation]  # List of Relation objects
+    """Conjunction of predicates (p1 ∧ p2 ∧ ...).
+    
+    Can contain Relations or nested Conjunctions.
+    """
+    items: List[PredicateItem]
 
     def evaluate(self, env: Dict[str, float]) -> bool:
-        # Return True only if ALL relations are True
-        return all(r.evaluate(env) for r in self.relations)
+        return all(item.evaluate(env) for item in self.items)
 
 
-# Represents an OR of multiple conjunctions
-# For example: (x > 1 AND y < 5) OR (x == 0)
 @dataclass(frozen=True)
 class Disjunction:
-    clauses: List[Conjunction]  # List of Conjunction objects
+    """Disjunction of clauses (c1 ∨ c2 ∨ ...).
+    
+    Can contain Relations or Conjunctions.
+    """
+    items: List[ClauseItem]
 
     def evaluate(self, env: Dict[str, float]) -> bool:
-        # Return True if ANY conjunction is True
-        return any(c.evaluate(env) for c in self.clauses)
+        return any(item.evaluate(env) for item in self.items)
 
 
-# A Rule is just a Disjunction (so it can have ORs of ANDs of relations)
+# Top-level rule type
 Rule = Disjunction

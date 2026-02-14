@@ -1,4 +1,10 @@
-# Importing necessary modules
+"""
+Lark-based parser for operational rules.
+
+Transforms string rules into strongly-typed schema objects.
+"""
+
+from pathlib import Path
 from lark import Lark, Transformer, exceptions
 from core.schema import (
     Variable, Constant, BinaryExpr,
@@ -8,88 +14,160 @@ from core.types import RelOp, ArithOp
 from core.config import GrammarConfig
 
 
-# This class transforms the parsed tree from Lark into our Python objects
 class RuleTransformer(Transformer):
+    """Transforms Lark parse tree into typed schema objects."""
+    
     def __init__(self, config: GrammarConfig):
-        self.config = config  # We use config to know which variables are allowed
+        super().__init__()
+        self.config = config
 
-    # Convert VARIABLE token into a Variable object
+    # Add this method to handle all terminals explicitly
+    def __default__(self, data, children, meta):
+        """Fallback for any unhandled rules."""
+        if len(children) == 1:
+            return children[0]
+        return children
+
     def VARIABLE(self, token):
+        """Transform VARIABLE token to Variable object."""
         name = str(token)
         if name not in self.config.allowed_variables:
-            # If variable is not allowed, raise an error
-            raise ValueError(f"Unknown variable: {name}")
+            raise ValueError(
+                f"Unknown variable: '{name}'. "
+                f"Allowed: {sorted(self.config.allowed_variables)}"
+            )
         return Variable(name)
 
-    # Convert NUMBER token into a Constant object
     def NUMBER(self, token):
+        """Transform NUMBER token to Constant object."""
         return Constant(float(token))
 
-    # Convert arithmetic operator token into ArithOp enum
     def AOP(self, token):
-        return ArithOp(token.value)
+        """Transform arithmetic operator token to ArithOp enum."""
+        return ArithOp.from_string(token.value)
 
-    # Convert relational operator token into RelOp enum
     def ROP(self, token):
-        return RelOp(token.value)
+        """Transform relational operator token to RelOp enum."""
+        return RelOp.from_string(token.value)
+    
+    # Handle term rule explicitly
+    def term(self, items):
+        """Transform term rule - ensures terminals become objects."""
+        if len(items) == 1:
+            return items[0]  # Should already be Variable or Constant
+        return items[0]  # Parenthesized expression
 
-    # Transform expression nodes
-    # If it's just a single item, return it
-    # Otherwise, it's a binary expression (like x + 5)
     def expression(self, items):
+        """Transform expression rule."""
         if len(items) == 1:
             return items[0]
+        # Binary expression: left op right
         return BinaryExpr(items[0], items[1], items[2])
 
-    # Transform a relation node (like x > 5)
     def relation(self, items):
-        return Relation(items[0], items[1], items[2])
+        """Transform relation rule into Relation object."""
+        # items should be [Expr, RelOp, Expr]
+        # But if it matches the grouped_rule format (which is handled separately but might interact), be careful.
+        # The grammar separates them: ?relation: expression ROP expression | "(" disjunction ")" -> grouped_rule
+        
+        # NOTE: If accessing directly via method name, it's specific.
+        if len(items) != 3:
+             # This might happen if the grammar rule for relation has other shapes, but
+             # currently it's expr ROP expr.
+             # However, grouped_rule handles the parens case.
+             raise ValueError(f"Expected 3 items in relation, got {len(items)}: {items}")
+        
+        left, op, right = items
+        
+        # Defensive check
+        if not isinstance(left, (Variable, Constant, BinaryExpr)):
+            # It might be that 'left' is still a Token if not transformed?
+            # But term/expression should have handled it.
+            raise TypeError(f"Left side of relation is {type(left)}, expected Expr. Value: {left}")
+        if not isinstance(op, RelOp):
+            raise TypeError(f"Operator is {type(op)}, expected RelOp. Value: {op}")
+        if not isinstance(right, (Variable, Constant, BinaryExpr)):
+            raise TypeError(f"Right side of relation is {type(right)}, expected Expr. Value: {right}")
+        
+        return Relation(left, op, right)
 
-    # Transform a conjunction node (AND)
     def conjunction(self, items):
-        if len(items) == 1:
-            return Conjunction([items[0]])  # Wrap single relation in a list
-        return Conjunction(items)
+        """Transform conjunction rule."""
+        flattened = []
+        for item in items:
+            if isinstance(item, Conjunction):
+                flattened.extend(item.items)
+            elif isinstance(item, (Relation, Disjunction)): # Explicitly check for valid Schema objects
+                flattened.append(item)
+            # Ignore tokens (AND, OR)
+        return Conjunction(flattened)
 
-    # Transform a disjunction node (OR)
     def disjunction(self, items):
-        if len(items) == 1:
-            return Disjunction([items[0]])  # Wrap single conjunction in a list
-        return Disjunction(items)
+        """Transform disjunction rule."""
+        flattened = []
+        for item in items:
+            if isinstance(item, Disjunction):
+                flattened.extend(item.items)
+            elif isinstance(item, (Relation, Conjunction)): # Explicitly check for valid Schema objects
+                flattened.append(item)
+            # Ignore tokens (AND, OR)
+        return Disjunction(flattened)
+    
+    # Handle grouped rules
+    def grouped_rule(self, items):
+        """Handle parenthesized disjunction."""
+        return items[0]
 
 
-# This class is the main parser interface for operational rules
 class OperationalRuleParser:
+    """High-level parser API for operational rules."""
+    
     def __init__(self, config: GrammarConfig):
-        self.config = config
-        # Load the grammar from the .lark file
-        self.parser = Lark.open(
-            "grammar/rules.lark",  # Path to the grammar file
-            parser="lalr",          # Use LALR parser (fast and efficient)
-            start="start",          # Start symbol in the grammar
-            transformer=RuleTransformer(config),  # Transform parse tree to Python objects
+        """Initialize parser with grammar configuration."""
+        # Resolve grammar file path
+        grammar_path = Path(__file__).parent.parent / "grammar" / "rules.lark"
+        
+        if not grammar_path.exists():
+            raise FileNotFoundError(f"Grammar file not found: {grammar_path}")
+        
+        # Read grammar with explicit UTF-8 encoding
+        with open(grammar_path, 'r', encoding='utf-8') as f:
+            grammar_content = f.read()
+        
+        # Create parser with grammar content
+        self.parser = Lark(
+            grammar_content,
+            parser="lalr",
+            transformer=RuleTransformer(config),
+            start="start",
         )
+        self.config = config
 
-    # Preprocess rule string before parsing
-    def _preprocess(self, rule_str: str) -> str:
-        rule_str = rule_str.strip()  # Remove extra spaces
-        # Remove code block markers if they exist (``` ... ```)
-        if rule_str.startswith("```") and rule_str.endswith("```"):
-            return "\n".join(rule_str.splitlines()[1:-1])
-        return rule_str
-
-    # Parse the rule string into Python objects
     def parse(self, rule_str: str):
+        """Parse a rule string into a typed Rule object."""
         try:
-            return self.parser.parse(self._preprocess(rule_str))
+            # Normalize Unicode operators (fallback for compatibility)
+            normalized = rule_str.replace("AND", "∧").replace("OR", "∨")
+            
+            # Strip whitespace and parse
+            result = self.parser.parse(normalized.strip())
+            
+            # Ensure result is a Disjunction
+            if not isinstance(result, Disjunction):
+                if isinstance(result, (Relation, Conjunction)):
+                    result = Disjunction([result])
+                else:
+                    raise ValueError(f"Unexpected parse result type: {type(result)}")
+            
+            return result
+            
         except (exceptions.LarkError, ValueError) as e:
-            # Raise error if parsing fails
-            raise ValueError(str(e))
+            raise ValueError(f"Parse error: {e}")
 
-    # Safe parse: returns (result, errors)
-    # If parsing fails, result is None and errors contain the messages
     def parse_safe(self, rule_str: str):
+        """Safe parsing that returns errors instead of raising."""
         try:
-            return self.parse(rule_str), []
+            rule = self.parse(rule_str)
+            return rule, []
         except ValueError as e:
             return None, [str(e)]
