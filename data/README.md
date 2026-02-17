@@ -13,7 +13,7 @@ Validation involves multiple stages (consistency checking, counterfactual analys
 Defines the raw simulation data that drives semantic validation:
 
 - **`SimulationTrace`** — A single simulation run containing:
-  - `input_vector`: Variable assignments (e.g., `{"ego_speed": 25.0, "dist_front": 10.0}`)
+  - `input_vector`: Variable assignments (example, `{"ego_speed": 25.0, "dist_front": 10.0}`)
   - `observed_outcome`: What actually happened (`"Pass"` or `"Fail"`)
   - `timestamp`: Optional execution timestamp
   - `metadata`: Extensible metadata dict

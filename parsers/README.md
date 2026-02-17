@@ -1,6 +1,6 @@
 # Parsers — Rule String → Typed AST
 
-This package transforms raw rule strings (e.g., from LLM output) into strongly-typed AST objects defined in `core/schema.py`.
+This package transforms raw rule strings (example, from LLM output) into strongly-typed AST objects defined in `core/schema.py`.
 
 ## Why This Exists
 

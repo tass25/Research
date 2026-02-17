@@ -111,8 +111,8 @@ class ChangeExtractor:
         """Extract (variable, operator, constant) from Relation.
         
         Handles both:
-        - Variable < Constant  (e.g., dist_front < 5)
-        - Constant > Variable  (e.g., 5 > dist_front)
+        - Variable < Constant  (example, dist_front < 5)
+        - Constant > Variable  (example, 5 > dist_front)
         
         Args:
             rel: Relation object to parse

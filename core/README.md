@@ -35,14 +35,14 @@ Rule (= Disjunction)
 │   └── items: List[ClauseItem]
 ├── Conjunction          # p₁ ∧ p₂ ∧ ... (AND of predicates)
 │   └── items: List[PredicateItem]
-├── Relation             # expr rop expr  (e.g., ego_speed > 5)
+├── Relation             # expr rop expr  (example, ego_speed > 5)
 │   ├── left: Expr
 │   ├── op: RelOp
 │   └── right: Expr
 └── Expr (base class)
-    ├── Variable         # Named variable (e.g., "dist_front")
-    ├── Constant         # Numeric literal (e.g., 5.0)
-    └── BinaryExpr       # Arithmetic (e.g., speed * 2)
+    ├── Variable         # Named variable (example, "dist_front")
+    ├── Constant         # Numeric literal (example, 5.0)
+    └── BinaryExpr       # Arithmetic (example, speed * 2)
 ```
 
 Every node implements an `evaluate(env)` method:
@@ -57,7 +57,7 @@ Every node implements an `evaluate(env)` method:
 ### `config.py` — ODD Configuration
 
 Defines `GrammarConfig`, a frozen dataclass containing:
-- **`allowed_variables`**: The set of variable names permitted in rules (e.g., `ego_speed`, `dist_front`)
+- **`allowed_variables`**: The set of variable names permitted in rules (example, `ego_speed`, `dist_front`)
 - **`variable_bounds`**: Physical/operational limits per variable from the ODD specification
 
 A pre-built `DEFAULT_ADS_CONFIG` is provided for Autonomous Driving Systems with four variables:

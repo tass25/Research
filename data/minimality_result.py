@@ -18,11 +18,11 @@ class RelationChange:
         Change:   -0.9 (tightening)
     
     Attributes:
-        variable: Variable name (e.g., "dist_front")
-        operator: Relational operator (e.g., "<")
-        original_constant: Constant in original rule (e.g., 5.0)
-        refined_constant: Constant in refined rule (e.g., 4.1)
-        delta: Change amount (refined - original, e.g., -0.9)
+        variable: Variable name (example, "dist_front")
+        operator: Relational operator (example, "<")
+        original_constant: Constant in original rule (example, 5.0)
+        refined_constant: Constant in refined rule (example, 4.1)
+        delta: Change amount (refined - original, example, -0.9)
         change_type: "tightening" | "loosening" | "unchanged"
         magnitude: Relative change magnitude (0.0 to 1.0+)
         is_justified: Whether change is supported by evidence

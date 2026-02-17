@@ -5,9 +5,9 @@ This package implements the **first line of defense** against invalid rules: syn
 ## Why This Exists
 
 LLM-generated rules frequently contain artifacts that a grammar parser alone cannot handle:
-- **Unicode variants** (e.g., `≤` instead of `<=`, zero-width spaces)
+- **Unicode variants** (example, `≤` instead of `<=`, zero-width spaces)
 - **Structural complexity** (deeply nested rules that are computationally intractable to verify)
-- **Physically impossible constants** (e.g., `ego_speed > 200` when the ODD maximum is 50 m/s)
+- **Physically impossible constants** (example, `ego_speed > 200` when the ODD maximum is 50 m/s)
 
 This package addresses each category with a dedicated, composable validator.
 
@@ -22,12 +22,12 @@ The validators follow a **pipeline pattern**: each validator can be applied inde
 Defines the two result types used by all validators:
 
 - **`ValidationWarning`** — A non-fatal issue that was automatically corrected:
-  - `category`: Type of issue (e.g., `"unicode"`, `"hidden"`)
+  - `category`: Type of issue (example, `"unicode"`, `"hidden"`)
   - `message`: Human-readable description
   - `original` / `corrected`: What was found and what it was normalized to
 
 - **`ValidationViolation`** — A fatal issue that prevents rule acceptance:
-  - `category`: Type of violation (e.g., `"bounds"`, `"structure"`, `"operators"`)
+  - `category`: Type of violation (example, `"bounds"`, `"structure"`, `"operators"`)
   - `severity`: Severity level (`"error"`)
   - `message`: Human-readable description
   - `location`: Where in the rule the violation was found
@@ -72,7 +72,7 @@ The `AbsoluteBoundValidator` ensures all constants are within the physically/log
 - For each `Variable op Constant` or `Constant op Variable` relation, checks whether the constant falls within the variable's ODD bounds
 - Example: `ego_speed < 200` with ODD bounds `[0, 50]` → **VIOLATION** (200 > 50)
 
-**Important distinction:** This validator checks **absolute bounds** (physical limits from the ODD). It does NOT check **relative tightening** (e.g., original rule had `< 30`, refined has `< 1`). Relative minimality analysis is handled by the `minimality/` package (Priority 3).
+**Important distinction:** This validator checks **absolute bounds** (physical limits from the ODD). It does NOT check **relative tightening** (example, original rule had `< 30`, refined has `< 1`). Relative minimality analysis is handled by the `minimality/` package (Priority 3).
 
 ### `statistics.py` — Rejection Tracking
 

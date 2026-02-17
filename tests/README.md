@@ -56,7 +56,7 @@ Tests the `ChangeExtractor` component with 9 tests across 2 test classes:
 Tests the `BoundAnalyzer` component with 9 tests across 2 test classes:
 
 **`TestTighteningSeverity`:**
-- Upper bound tightening severity (e.g., `ego_speed < 30` → `< 1`)
+- Upper bound tightening severity (example, `ego_speed < 30` → `< 1`)
 - Lower bound tightening severity
 - Loosening returns zero severity
 - No change returns zero severity

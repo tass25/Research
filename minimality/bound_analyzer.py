@@ -90,7 +90,7 @@ class BoundAnalyzer:
             change: RelationChange to analyze
             
         Returns:
-            Percentage change (e.g., 18.0 for 18% change)
+            Percentage change (example, 18.0 for 18% change)
         """
         if change.original_constant == 0:
             return 0.0
