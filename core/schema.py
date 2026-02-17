@@ -18,7 +18,7 @@ class Expr:
 
 @dataclass(frozen=True)
 class Variable(Expr):
-    """A variable reference (e.g., ego_speed, dist_front)."""
+    """A variable reference (example, ego_speed, dist_front)."""
     name: str
 
     def evaluate(self, env: Dict[str, float]) -> float:
@@ -29,7 +29,7 @@ class Variable(Expr):
 
 @dataclass(frozen=True)
 class Constant(Expr):
-    """A numeric constant (e.g., 5.0, 3.14)."""
+    """A numeric constant (example, 5.0, 3.14)."""
     value: float
 
     def evaluate(self, env: Dict[str, float]) -> float:
@@ -38,7 +38,7 @@ class Constant(Expr):
 
 @dataclass(frozen=True)
 class BinaryExpr(Expr):
-    """Binary arithmetic expression (e.g., speed * 2)."""
+    """Binary arithmetic expression (example, speed * 2)."""
     left: Expr
     op: ArithOp
     right: Expr
@@ -60,7 +60,7 @@ class BinaryExpr(Expr):
 
 @dataclass(frozen=True)
 class Relation:
-    """Relational predicate (e.g., ego_speed > 5)."""
+    """Relational predicate (example, ego_speed > 5)."""
     left: Expr
     op: RelOp
     right: Expr

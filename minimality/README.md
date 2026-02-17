@@ -48,7 +48,7 @@ The `ChangeExtractor` identifies what changed between an original and refined ru
 | `>`, `>=` | Loosening ↓ | Tightening ↑ | Larger lower bound = tighter |
 | `=`, `!=` | Tightening | Tightening | Any change to equality is considered tightening |
 
-**Operator flipping:** Handles both `Variable op Constant` and `Constant op Variable` by flipping the operator (e.g., `5 > x` becomes `x < 5`).
+**Operator flipping:** Handles both `Variable op Constant` and `Constant op Variable` by flipping the operator (example, `5 > x` becomes `x < 5`).
 
 ### `bound_analyzer.py` — Tightening Severity Analysis
 

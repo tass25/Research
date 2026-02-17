@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ValidationWarning:
-    """Non-fatal warning that was handled (e.g., normalized Unicode)."""
+    """Non-fatal warning that was handled (example, normalized Unicode)."""
     category: str
     message: str
     original: str

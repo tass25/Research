@@ -11,7 +11,7 @@ Demonstrates the core parsing and syntactic validation pipeline using examples f
 **What it does:**
 1. Initializes the `OperationalRuleParser` with `DEFAULT_ADS_CONFIG`
 2. Runs six test cases covering:
-   - ✅ Valid rules from the paper (e.g., `r1` and its refined `r1★`)
+   - ✅ Valid rules from the paper (example, `r1` and its refined `r1★`)
    - ✅ Simple disjunction
    - ✅ Unicode operator normalization (`≤`)
    - ❌ Unknown variable (`unknown_var`) → expected parse failure
