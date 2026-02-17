@@ -66,6 +66,9 @@ class ChangeExtractor:
                     # Compute change
                     delta = ref_const - orig_const
                     change_type = self._classify_change(orig_op, delta)
+                    if change_type == "unchanged":
+                        matched_refined.add(i)
+                        break
                     magnitude = abs(delta) / abs(orig_const) if orig_const != 0 else 0.0
                     
                     changes.append(RelationChange(

@@ -157,7 +157,7 @@ class TestWeightedScoring:
                 refined_constant=15.0,
                 delta=5.0,
                 change_type="tightening",
-                magnitude=0.5,
+                magnitude=0.8,
                 is_justified=False,
                 justification="Not justified"
             ),

@@ -93,14 +93,15 @@ class MinimalityScorer:
         justified_ratio = justified_count / len(changes)
         
         # Magnitude component
-        unjustified_tightenings = [
+        unjustified_changes = [
             c for c in changes
-            if c.change_type == "tightening" and not c.is_justified
+            if c.change_type != "unchanged" and not c.is_justified
         ]
         
-        if unjustified_tightenings:
-            avg_magnitude = sum(c.magnitude for c in unjustified_tightenings) / len(unjustified_tightenings)
-            magnitude_penalty = 1.0 - min(avg_magnitude, 1.0)
+        if unjustified_changes:
+            avg_magnitude = sum(c.magnitude for c in unjustified_changes) / len(unjustified_changes)
+            avg_magnitude = min(avg_magnitude, 1.0)
+            magnitude_penalty = max(0.0, 1.0 - avg_magnitude)
         else:
             magnitude_penalty = 1.0
         
