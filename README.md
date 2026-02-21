@@ -111,6 +111,36 @@ This project implements a **multi-layered validation pipeline** that catches the
 └── .gitignore
 ```
 
+### CBFKIT Extension (Groups A / B / C)
+
+```
+├── cbf_data/                       # Group A — CBFKIT data integration
+│   ├── loader.py                  #   SimulationDataset, load_dataset(), PairedComparison
+│   ├── metadata.py                #   System/feature metadata, physical bounds
+│   └── datasets/                  #   CSV files per system/controller
+│       ├── unicycle_static_obstacle/{robust_evolved,robust_vanilla}/
+│       └── unicycle_dynamic_obstacle/{robust_evolved,robust_vanilla}/
+│
+├── rule_inference/                 # Group B — ML-based rule extraction
+│   ├── tree_extractor.py          #   Decision tree path → DNF rules, depth sweep
+│   ├── forest_extractor.py        #   Random forest top-k tree extraction
+│   ├── grammar_checker.py         #   Wrapper → shared.grammar_validation
+│   └── rule_export.py             #   CSV export and inference reports
+│
+├── rule_validation/                # Group C — Rule evaluation & selection
+│   ├── rule_evaluator.py          #   Decisiveness, FPR, FNR on D_evolved
+│   ├── rule_selector.py           #   Top-k inconsistent rule selection
+│   ├── counterfactual_hints.py    #   L1-minimal perturbation candidates
+│   └── validation_report.py       #   CSV and text report generation
+│
+├── shared/                         # Shared utilities (Groups B & C)
+│   └── grammar_validation.py     #   Grammar G compliance validation (single source of truth)
+│
+├── run_pipeline.py                 # End-to-end pipeline: A → B → C
+└── output/                         # Generated results (gitignored)
+    └── {system}/{controller}/     #   candidate_rules.csv, selected_rules.csv, ...
+```
+
 > 📖 **Each folder contains its own detailed `README.md`** with file-by-file explanations, design decisions, and rationale.
 
 ## Installation
@@ -123,7 +153,7 @@ This project implements a **multi-layered validation pipeline** that catches the
    ```
 3. **Install dependencies:**
    ```bash
-   pip install lark numpy pytest
+   pip install lark numpy pytest scikit-learn pandas openpyxl
    ```
 
 ## Quick Start
@@ -155,6 +185,17 @@ python -m examples.paper_examples        # Grammar enforcement
 python -m examples.semantic_examples      # Semantic validation
 python -m examples.minimality_examples    # Minimality analysis
 ```
+
+### Run the CBFKIT pipeline (Groups A → B → C)
+```bash
+# All 4 system/controller configurations
+python run_pipeline.py
+
+# Single configuration
+python run_pipeline.py --system unicycle_static_obstacle --controller robust_evolved
+```
+
+Results are written to `output/{system}/{controller}/`.
 
 ## Testing
 
@@ -188,6 +229,9 @@ python -m pytest tests/test_minimality_scorer.py -v
 |---------|---------|---------|
 | `lark` | ≥ 1.0 | LALR parser for grammar enforcement |
 | `numpy` | ≥ 1.20 | Counterfactual generation (Dirichlet sampling) |
+| `scikit-learn` | ≥ 1.0 | Decision tree / random forest rule extraction (Group B) |
+| `pandas` | ≥ 1.3 | Data loading utilities |
+| `openpyxl` | ≥ 3.0 | Excel file reading |
 | `pytest` | ≥ 7.0 | Test framework |
 | `pytest-cov` | ≥ 4.0 | Test coverage (optional) |
 
