@@ -3,11 +3,11 @@ RULE SELECTION & VALIDATION REPORT (Group C)
 ======================================================================
 
 System: unicycle_static_obstacle / robust_evolved
-Total rules evaluated: 39
+Total rules evaluated: 38
 
 Pass rules evaluated: 16
-Fail rules evaluated: 23
-Rules meeting strict criteria (FP>=20%, FN<=5%): 17
+Fail rules evaluated: 22
+Rules meeting strict criteria (FP>=20%, FN<=5%): 16
 
 ──────────────────────────────────────────────────────────────────────
 TOP-10 SELECTED INCONSISTENT RULES
@@ -20,74 +20,74 @@ TOP-10 SELECTED INCONSISTENT RULES
   Mismatches: 126/144 | TP=0 TN=18 FP=126 FN=0
   Reason: FP rate 87.5% >= 20% | FN rate 0.0% <= 5% | 126 mismatches on 144 runs
 
-  Rank 2: [DT_DNF_d2_fail] (fail rule)
-  Score: 0.8750
-  Rule: (initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732)
-  Decisiveness: 0.1250 | FPR: 87.50% | FNR: 0.00%
-  Mismatches: 126/144 | TP=0 TN=18 FP=126 FN=0
-  Reason: FP rate 87.5% >= 20% | FN rate 0.0% <= 5% | 126 mismatches on 144 runs
-
-  Rank 3: [DT_DNF_d3_fail] (fail rule)
+  Rank 2: [DT_DNF_d3_fail] (fail rule)
   Score: 0.8750
   Rule: (initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius <= 0.3731) OR (initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius > 0.3731)
   Decisiveness: 0.1250 | FPR: 87.50% | FNR: 0.00%
   Mismatches: 126/144 | TP=0 TN=18 FP=126 FN=0
   Reason: FP rate 87.5% >= 20% | FN rate 0.0% <= 5% | 126 mismatches on 144 runs
 
-  Rank 4: [RF_DNF_t14_fail] (fail rule)
+  Rank 3: [RF_DNF_t14_fail] (fail rule)
   Score: 0.8750
   Rule: (initial_heading_error > -1.6915 AND initial_distance_to_obstacle <= 1.3038) OR (initial_heading_error > -1.6915 AND initial_distance_to_obstacle > 1.3038 AND initial_heading_error <= 0.4442 AND initial_distance_to_obstacle <= 2.2714) OR (initial_heading_error > -1.6915 AND initial_distance_to_obstacle > 1.3038 AND initial_heading_error <= 0.4442 AND initial_distance_to_obstacle > 2.2714)
   Decisiveness: 0.1250 | FPR: 87.50% | FNR: 0.00%
   Mismatches: 126/144 | TP=0 TN=18 FP=126 FN=0
   Reason: FP rate 87.5% >= 20% | FN rate 0.0% <= 5% | 126 mismatches on 144 runs
 
-  Rank 5: [RF_DNF_t66_fail] (fail rule)
+  Rank 4: [RF_DNF_t66_fail] (fail rule)
   Score: 0.8681
   Rule: (initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_heading_error <= 0.4532) OR (initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_heading_error > 0.4532)
   Decisiveness: 0.1319 | FPR: 86.81% | FNR: 0.00%
   Mismatches: 125/144 | TP=0 TN=19 FP=125 FN=0
   Reason: FP rate 86.8% >= 20% | FN rate 0.0% <= 5% | 125 mismatches on 144 runs
 
-  Rank 6: [RF_DNF_t75_fail] (fail rule)
+  Rank 5: [RF_DNF_t75_fail] (fail rule)
   Score: 0.8681
   Rule: (initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_speed <= 1.6154) OR (initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_speed > 1.6154 AND obstacle_radius <= 0.4931) OR (initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_speed > 1.6154 AND obstacle_radius > 0.4931)
   Decisiveness: 0.1319 | FPR: 86.81% | FNR: 0.00%
   Mismatches: 125/144 | TP=0 TN=19 FP=125 FN=0
   Reason: FP rate 86.8% >= 20% | FN rate 0.0% <= 5% | 125 mismatches on 144 runs
 
-  Rank 7: [RF_DNF_t88_fail] (fail rule)
+  Rank 6: [RF_DNF_t88_fail] (fail rule)
   Score: 0.8681
   Rule: (initial_heading_error <= 0.974 AND initial_heading_error > -1.3198 AND initial_distance_to_obstacle <= 1.9478) OR (initial_heading_error <= 0.974 AND initial_heading_error > -1.3198 AND initial_distance_to_obstacle > 1.9478 AND obstacle_radius <= 0.4534) OR (initial_heading_error <= 0.974 AND initial_heading_error > -1.3198 AND initial_distance_to_obstacle > 1.9478 AND obstacle_radius > 0.4534)
   Decisiveness: 0.1319 | FPR: 86.81% | FNR: 0.00%
   Mismatches: 125/144 | TP=0 TN=19 FP=125 FN=0
   Reason: FP rate 86.8% >= 20% | FN rate 0.0% <= 5% | 125 mismatches on 144 runs
 
-  Rank 8: [DT_d3_r4] (fail rule)
+  Rank 7: [DT_d3_r4] (fail rule)
   Score: 0.8472
   Rule: initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius > 0.3731
   Decisiveness: 0.1528 | FPR: 84.72% | FNR: 0.00%
   Mismatches: 122/144 | TP=0 TN=22 FP=122 FN=0
   Reason: FP rate 84.7% >= 20% | FN rate 0.0% <= 5% | 122 mismatches on 144 runs
 
-  Rank 9: [RF_DNF_t55_fail] (fail rule)
+  Rank 8: [RF_DNF_t55_fail] (fail rule)
   Score: 0.8472
   Rule: (initial_heading_error > -1.2199 AND initial_distance_to_obstacle <= 1.3136) OR (initial_heading_error > -1.2199 AND initial_distance_to_obstacle > 1.3136 AND initial_heading_error <= 0.4442)
   Decisiveness: 0.1528 | FPR: 84.72% | FNR: 0.00%
   Mismatches: 122/144 | TP=0 TN=22 FP=122 FN=0
   Reason: FP rate 84.7% >= 20% | FN rate 0.0% <= 5% | 122 mismatches on 144 runs
 
-  Rank 10: [RF_t66_r2] (fail rule)
+  Rank 9: [RF_t66_r2] (fail rule)
   Score: 0.8403
   Rule: initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_heading_error <= 0.4532
   Decisiveness: 0.1597 | FPR: 84.03% | FNR: 0.00%
   Mismatches: 121/144 | TP=0 TN=23 FP=121 FN=0
   Reason: FP rate 84.0% >= 20% | FN rate 0.0% <= 5% | 121 mismatches on 144 runs
 
+  Rank 10: [RF_t75_r2] (fail rule)
+  Score: 0.6806
+  Rule: initial_heading_error > -1.3198 AND initial_heading_error <= 0.7461 AND initial_speed <= 1.6154
+  Decisiveness: 0.3194 | FPR: 68.06% | FNR: 0.00%
+  Mismatches: 98/144 | TP=0 TN=46 FP=98 FN=0
+  Reason: FP rate 68.1% >= 20% | FN rate 0.0% <= 5% | 98 mismatches on 144 runs
+
 ──────────────────────────────────────────────────────────────────────
 INCONSISTENCY EXAMPLES SUMMARY
 ──────────────────────────────────────────────────────────────────────
-Total inconsistent examples collected: 1244
-Counterfactuals that flip verdict: 3452
-Average L1 distance of perturbations: 0.943351
+Total inconsistent examples collected: 1216
+Counterfactuals that flip verdict: 3494
+Average L1 distance of perturbations: 0.929525
 
 ======================================================================

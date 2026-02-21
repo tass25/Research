@@ -3,7 +3,6 @@ DT_d2_r1,pass,initial_heading_error <= 0.8236 AND initial_heading_error <= -1.05
 DT_d2_r2,fail,initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574,157,102,0.3503,0.6497,0.0000,0,55,102,0,0.3503,True,True
 DT_d2_r3,pass,initial_heading_error > 0.8236,157,0,1.0000,0.0000,0.8153,29,0,0,128,0.1847,True,False
 DT_DNF_d2_pass,pass,(initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574) OR initial_heading_error > 0.8236,157,0,1.0000,0.0000,0.6497,55,0,0,102,0.3503,True,False
-DT_DNF_d2_fail,fail,(initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574),157,102,0.3503,0.6497,0.0000,0,55,102,0,0.3503,True,True
 DT_d3_r1,pass,initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574 AND initial_speed <= 0.7535,157,0,1.0000,0.0000,0.9490,8,0,0,149,0.0510,True,False
 DT_d3_r2,pass,initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574 AND initial_speed > 0.7535,157,0,1.0000,0.0000,0.8854,18,0,0,139,0.1146,True,False
 DT_d3_r3,fail,initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266,157,43,0.7261,0.2739,0.0000,0,114,43,0,0.7261,True,True

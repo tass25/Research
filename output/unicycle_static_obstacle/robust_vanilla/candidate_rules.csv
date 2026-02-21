@@ -3,7 +3,6 @@ DT_d2_r1,initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574,pa
 DT_d2_r2,initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574,fail,0.9563,0.9500,0.9247,0.9091,2,1,0.9565,decision_tree,True,True,initial_heading_error,2
 DT_d2_r3,initial_heading_error > 0.8236,pass,0.9563,0.9500,0.9247,0.9091,1,1,1.0000,decision_tree,True,True,initial_heading_error,1
 DT_DNF_d2_pass,(initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574) OR initial_heading_error > 0.8236,pass,0.9563,0.9500,0.9247,0.9091,3,2,0.9545,decision_tree_dnf,True,True,initial_heading_error,3
-DT_DNF_d2_fail,(initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574),fail,0.9563,0.9500,0.9247,0.9091,2,1,0.9565,decision_tree_dnf,True,True,initial_heading_error,2
 DT_d3_r1,initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574 AND initial_speed <= 0.7535,pass,0.9563,0.9500,0.9247,0.9091,3,1,0.6000,decision_tree,True,True,initial_heading_error; initial_speed,3
 DT_d3_r2,initial_heading_error <= 0.8236 AND initial_heading_error <= -1.0574 AND initial_speed > 0.7535,pass,0.9563,0.9500,0.9247,0.9091,3,1,1.0000,decision_tree,True,True,initial_heading_error; initial_speed,3
 DT_d3_r3,initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266,fail,0.9563,0.9500,0.9247,0.9091,3,1,0.8810,decision_tree,True,True,initial_heading_error; obstacle_radius,3

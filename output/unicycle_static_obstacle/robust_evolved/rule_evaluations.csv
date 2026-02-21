@@ -4,7 +4,6 @@ DT_d2_r2,pass,initial_heading_error <= -1.3198 AND initial_distance_to_obstacle 
 DT_d2_r3,fail,initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732,144,126,0.1250,0.8750,0.0000,0,18,126,0,0.1250,True,True
 DT_d2_r4,pass,initial_heading_error > -1.3198 AND initial_heading_error > 1.0732,144,0,1.0000,0.0000,0.9583,6,0,0,138,0.0417,True,False
 DT_DNF_d2_pass,pass,(initial_heading_error <= -1.3198 AND initial_distance_to_obstacle <= 1.9787) OR (initial_heading_error <= -1.3198 AND initial_distance_to_obstacle > 1.9787) OR (initial_heading_error > -1.3198 AND initial_heading_error > 1.0732),144,0,1.0000,0.0000,0.8750,18,0,0,126,0.1250,True,False
-DT_DNF_d2_fail,fail,(initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732),144,126,0.1250,0.8750,0.0000,0,18,126,0,0.1250,True,True
 DT_d3_r3,fail,initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius <= 0.3731,144,4,0.9722,0.0278,0.0000,0,140,4,0,0.9722,True,False
 DT_d3_r4,fail,initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius > 0.3731,144,122,0.1528,0.8472,0.0000,0,22,122,0,0.1528,True,True
 DT_DNF_d3_fail,fail,(initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius <= 0.3731) OR (initial_heading_error > -1.3198 AND initial_heading_error <= 1.0732 AND obstacle_radius > 0.3731),144,126,0.1250,0.8750,0.0000,0,18,126,0,0.1250,True,True

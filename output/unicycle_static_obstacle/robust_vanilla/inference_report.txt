@@ -3,18 +3,18 @@ OPERATIONAL RULE INFERENCE REPORT (Group B)
 ======================================================================
 
 Dataset: unicycle_static_obstacle / robust_vanilla / D_legacy (200 runs)
-Total candidate rules extracted: 59
+Total candidate rules extracted: 58
 
   [decision_tree] 11 rules
-  [decision_tree_dnf] 7 rules
+  [decision_tree_dnf] 6 rules
   [random_forest] 31 rules
   [random_forest_dnf] 10 rules
 
   Pass rules: 27
-  Fail rules: 32
+  Fail rules: 31
 
-  Grammar-compliant: 59/59
-  Valid DNF: 59/59
+  Grammar-compliant: 58/58
+  Valid DNF: 58/58
 
   Validation accuracy range: [0.9000, 1.0000]
   Validation F1 range: [0.8462, 0.9091]

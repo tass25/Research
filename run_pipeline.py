@@ -113,13 +113,32 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     )
     print(f"  High-confidence candidates: {len(hc_candidates)}")
 
-    # Combine all candidates (deduplicate by rule_text)
+    # Combine all candidates (deduplicate by normalized rule_text)
     all_candidates = dt_candidates + rf_candidates + hc_candidates
     seen_texts = set()
     unique_candidates = []
     for c in all_candidates:
-        if c.rule_text not in seen_texts:
-            seen_texts.add(c.rule_text)
+        # Normalize: strip outer parentheses for dedup comparison
+        normalized = c.rule_text.strip()
+        while normalized.startswith("(") and normalized.endswith(")"):
+            inner = normalized[1:-1]
+            # Only strip if the outer parens wrap the whole expression
+            depth = 0
+            balanced = True
+            for ch in inner:
+                if ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth -= 1
+                if depth < 0:
+                    balanced = False
+                    break
+            if balanced and depth == 0:
+                normalized = inner.strip()
+            else:
+                break
+        if normalized not in seen_texts:
+            seen_texts.add(normalized)
             unique_candidates.append(c)
 
     print(f"  Total unique candidates: {len(unique_candidates)}")

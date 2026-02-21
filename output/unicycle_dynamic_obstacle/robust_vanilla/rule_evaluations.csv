@@ -3,7 +3,6 @@ DT_d2_r1,fail,obstacle_heading <= 0.2668 AND initial_heading_error <= 1.0664,141
 DT_d2_r2,fail,obstacle_heading <= 0.2668 AND initial_heading_error > 1.0664,141,19,0.8652,0.1348,0.0000,0,122,19,0,0.8652,True,False
 DT_d2_r3,pass,obstacle_heading > 0.2668 AND initial_heading_error <= -0.9853,141,0,1.0000,0.0000,0.8794,17,0,0,124,0.1206,True,False
 DT_d2_r4,fail,obstacle_heading > 0.2668 AND initial_heading_error > -0.9853,141,37,0.7376,0.2624,0.0000,0,104,37,0,0.7376,True,True
-DT_DNF_d2_pass,pass,(obstacle_heading > 0.2668 AND initial_heading_error <= -0.9853),141,0,1.0000,0.0000,0.8794,17,0,0,124,0.1206,True,False
 DT_DNF_d2_fail,fail,(obstacle_heading <= 0.2668 AND initial_heading_error <= 1.0664) OR (obstacle_heading <= 0.2668 AND initial_heading_error > 1.0664) OR (obstacle_heading > 0.2668 AND initial_heading_error > -0.9853),141,124,0.1206,0.8794,0.0000,0,17,124,0,0.1206,True,True
 DT_d3_r1,fail,obstacle_heading <= 0.2668 AND initial_heading_error <= 1.0664 AND obstacle_radius <= 0.475,141,9,0.9362,0.0638,0.0000,0,132,9,0,0.9362,True,False
 DT_d3_r2,fail,obstacle_heading <= 0.2668 AND initial_heading_error <= 1.0664 AND obstacle_radius > 0.475,141,59,0.5816,0.4184,0.0000,0,82,59,0,0.5816,True,True

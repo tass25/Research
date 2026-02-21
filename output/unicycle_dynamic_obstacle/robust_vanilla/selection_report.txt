@@ -3,9 +3,9 @@ RULE SELECTION & VALIDATION REPORT (Group C)
 ======================================================================
 
 System: unicycle_dynamic_obstacle / robust_vanilla
-Total rules evaluated: 104
+Total rules evaluated: 103
 
-Pass rules evaluated: 42
+Pass rules evaluated: 41
 Fail rules evaluated: 62
 Rules meeting strict criteria (FP>=20%, FN<=5%): 22
 
