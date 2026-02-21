@@ -1,0 +1,66 @@
+======================================================================
+OPERATIONAL RULE INFERENCE REPORT (Group B)
+======================================================================
+
+Dataset: unicycle_static_obstacle / robust_vanilla / D_legacy (200 runs)
+Total candidate rules extracted: 59
+
+  [decision_tree] 11 rules
+  [decision_tree_dnf] 7 rules
+  [random_forest] 31 rules
+  [random_forest_dnf] 10 rules
+
+  Pass rules: 27
+  Fail rules: 32
+
+  Grammar-compliant: 59/59
+  Valid DNF: 59/59
+
+  Validation accuracy range: [0.9000, 1.0000]
+  Validation F1 range: [0.8462, 0.9091]
+
+──────────────────────────────────────────────────────────────────────
+TOP FAIL RULES (candidates for inconsistency detection):
+──────────────────────────────────────────────────────────────────────
+
+  [DT_d3_r4] (grammar_valid=True)
+  Text: initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius > 0.6266
+  Conf=1.00, Support=1, ValAcc=0.9500, Complexity=3
+
+  [DT_d5_r4] (grammar_valid=True)
+  Text: initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266 AND initial_heading_error > -0.5728 AND initial_heading_error <= 0.1928
+  Conf=1.00, Support=1, ValAcc=0.9000, Complexity=5
+
+  [RF_t84_r2] (grammar_valid=True)
+  Text: initial_heading_error <= 0.8236 AND initial_heading_error > -1.4238 AND initial_heading_error <= -0.7406 AND initial_speed <= 1.3785
+  Conf=1.00, Support=1, ValAcc=1.0000, Complexity=4
+
+  [RF_t84_r4] (grammar_valid=True)
+  Text: initial_heading_error <= 0.8236 AND initial_heading_error > -1.4238 AND initial_heading_error > -0.7406 AND initial_distance_to_obstacle <= 2.1803
+  Conf=1.00, Support=1, ValAcc=1.0000, Complexity=4
+
+  [RF_t19_r4] (grammar_valid=True)
+  Text: obstacle_radius <= 0.8762 AND initial_heading_error <= 0.8236 AND initial_distance_to_obstacle > 2.2733 AND initial_heading_error > -0.7341
+  Conf=1.00, Support=1, ValAcc=0.9750, Complexity=4
+
+  [RF_t19_r6] (grammar_valid=True)
+  Text: obstacle_radius > 0.8762 AND obstacle_radius <= 0.9671
+  Conf=1.00, Support=1, ValAcc=0.9750, Complexity=2
+
+  [RF_t30_r5] (grammar_valid=True)
+  Text: initial_heading_error <= 0.6854 AND obstacle_radius > 0.8169
+  Conf=1.00, Support=1, ValAcc=0.9750, Complexity=2
+
+  [RF_t11_r5] (grammar_valid=True)
+  Text: initial_heading_error <= 0.8236 AND initial_heading_error > -1.0271 AND initial_heading_error > -0.7341 AND initial_speed > 0.1598
+  Conf=1.00, Support=1, ValAcc=0.9500, Complexity=4
+
+  [RF_t13_r3] (grammar_valid=True)
+  Text: initial_heading_error > -1.0574 AND obstacle_radius <= 0.5504 AND initial_heading_error <= 0.6346 AND obstacle_radius <= 0.4199
+  Conf=1.00, Support=1, ValAcc=0.9500, Complexity=4
+
+  [RF_t13_r6] (grammar_valid=True)
+  Text: initial_heading_error > -1.0574 AND obstacle_radius > 0.5504 AND initial_distance_to_obstacle <= 2.0298 AND initial_heading_error <= 0.7062
+  Conf=1.00, Support=1, ValAcc=0.9500, Complexity=4
+
+======================================================================

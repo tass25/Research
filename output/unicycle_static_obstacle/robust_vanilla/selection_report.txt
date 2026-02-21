@@ -1,0 +1,93 @@
+======================================================================
+RULE SELECTION & VALIDATION REPORT (Group C)
+======================================================================
+
+System: unicycle_static_obstacle / robust_vanilla
+Total rules evaluated: 59
+
+Pass rules evaluated: 27
+Fail rules evaluated: 32
+Rules meeting strict criteria (FP>=20%, FN<=5%): 20
+
+──────────────────────────────────────────────────────────────────────
+TOP-10 SELECTED INCONSISTENT RULES
+──────────────────────────────────────────────────────────────────────
+
+  Rank 1: [RF_DNF_t13_fail] (fail rule)
+  Score: 0.6624
+  Rule: (initial_heading_error > -1.0574 AND obstacle_radius <= 0.5504 AND initial_heading_error <= 0.6346 AND obstacle_radius <= 0.4199) OR (initial_heading_error > -1.0574 AND obstacle_radius <= 0.5504 AND initial_heading_error <= 0.6346 AND obstacle_radius > 0.4199) OR (initial_heading_error > -1.0574 AND obstacle_radius > 0.5504 AND initial_distance_to_obstacle <= 2.0298 AND initial_heading_error <= 0.7062) OR (initial_heading_error > -1.0574 AND obstacle_radius > 0.5504 AND initial_distance_to_obstacle > 2.0298)
+  Decisiveness: 0.3376 | FPR: 66.24% | FNR: 0.00%
+  Mismatches: 104/157 | TP=0 TN=53 FP=104 FN=0
+  Reason: FP rate 66.2% >= 20% | FN rate 0.0% <= 5% | 104 mismatches on 157 runs
+
+  Rank 2: [DT_d2_r2] (fail rule)
+  Score: 0.6497
+  Rule: initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574
+  Decisiveness: 0.3503 | FPR: 64.97% | FNR: 0.00%
+  Mismatches: 102/157 | TP=0 TN=55 FP=102 FN=0
+  Reason: FP rate 65.0% >= 20% | FN rate 0.0% <= 5% | 102 mismatches on 157 runs
+
+  Rank 3: [DT_DNF_d2_fail] (fail rule)
+  Score: 0.6497
+  Rule: (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574)
+  Decisiveness: 0.3503 | FPR: 64.97% | FNR: 0.00%
+  Mismatches: 102/157 | TP=0 TN=55 FP=102 FN=0
+  Reason: FP rate 65.0% >= 20% | FN rate 0.0% <= 5% | 102 mismatches on 157 runs
+
+  Rank 4: [DT_DNF_d3_fail] (fail rule)
+  Score: 0.6497
+  Rule: (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius > 0.6266)
+  Decisiveness: 0.3503 | FPR: 64.97% | FNR: 0.00%
+  Mismatches: 102/157 | TP=0 TN=55 FP=102 FN=0
+  Reason: FP rate 65.0% >= 20% | FN rate 0.0% <= 5% | 102 mismatches on 157 runs
+
+  Rank 5: [RF_DNF_t84_fail] (fail rule)
+  Score: 0.6497
+  Rule: (initial_heading_error <= 0.8236 AND initial_heading_error > -1.4238 AND initial_heading_error <= -0.7406 AND initial_speed <= 1.3785) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.4238 AND initial_heading_error > -0.7406 AND initial_distance_to_obstacle <= 2.1803) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.4238 AND initial_heading_error > -0.7406 AND initial_distance_to_obstacle > 2.1803)
+  Decisiveness: 0.3503 | FPR: 64.97% | FNR: 0.00%
+  Mismatches: 102/157 | TP=0 TN=55 FP=102 FN=0
+  Reason: FP rate 65.0% >= 20% | FN rate 0.0% <= 5% | 102 mismatches on 157 runs
+
+  Rank 6: [RF_DNF_t30_fail] (fail rule)
+  Score: 0.6497
+  Rule: (initial_heading_error <= 0.6854 AND obstacle_radius <= 0.8169 AND initial_heading_error > -0.963 AND initial_heading_error <= -0.6009) OR (initial_heading_error <= 0.6854 AND obstacle_radius <= 0.8169 AND initial_heading_error > -0.963 AND initial_heading_error > -0.6009) OR (initial_heading_error <= 0.6854 AND obstacle_radius > 0.8169)
+  Decisiveness: 0.3503 | FPR: 64.97% | FNR: 0.00%
+  Mismatches: 102/157 | TP=0 TN=55 FP=102 FN=0
+  Reason: FP rate 65.0% >= 20% | FN rate 0.0% <= 5% | 102 mismatches on 157 runs
+
+  Rank 7: [RF_DNF_t11_fail] (fail rule)
+  Score: 0.6497
+  Rule: (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0271 AND initial_heading_error <= -0.7341) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0271 AND initial_heading_error > -0.7341 AND initial_speed <= 0.1598) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0271 AND initial_heading_error > -0.7341 AND initial_speed > 0.1598)
+  Decisiveness: 0.3503 | FPR: 64.97% | FNR: 0.00%
+  Mismatches: 102/157 | TP=0 TN=55 FP=102 FN=0
+  Reason: FP rate 65.0% >= 20% | FN rate 0.0% <= 5% | 102 mismatches on 157 runs
+
+  Rank 8: [RF_DNF_t19_fail] (fail rule)
+  Score: 0.6178
+  Rule: (obstacle_radius <= 0.8762 AND initial_heading_error <= 0.8236 AND initial_distance_to_obstacle <= 2.2733 AND initial_heading_error > -0.8937) OR (obstacle_radius <= 0.8762 AND initial_heading_error <= 0.8236 AND initial_distance_to_obstacle > 2.2733 AND initial_heading_error > -0.7341) OR (obstacle_radius > 0.8762 AND obstacle_radius <= 0.9671) OR (obstacle_radius > 0.8762 AND obstacle_radius > 0.9671)
+  Decisiveness: 0.3822 | FPR: 61.78% | FNR: 0.00%
+  Mismatches: 97/157 | TP=0 TN=60 FP=97 FN=0
+  Reason: FP rate 61.8% >= 20% | FN rate 0.0% <= 5% | 97 mismatches on 157 runs
+
+  Rank 9: [DT_DNF_d4_fail] (fail rule)
+  Score: 0.5924
+  Rule: (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266 AND initial_heading_error > -0.5728) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius > 0.6266)
+  Decisiveness: 0.4076 | FPR: 59.24% | FNR: 0.00%
+  Mismatches: 93/157 | TP=0 TN=64 FP=93 FN=0
+  Reason: FP rate 59.2% >= 20% | FN rate 0.0% <= 5% | 93 mismatches on 157 runs
+
+  Rank 10: [DT_DNF_d5_fail] (fail rule)
+  Score: 0.5924
+  Rule: (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266 AND initial_heading_error > -0.5728 AND initial_heading_error <= 0.1928) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius <= 0.6266 AND initial_heading_error > -0.5728 AND initial_heading_error > 0.1928) OR (initial_heading_error <= 0.8236 AND initial_heading_error > -1.0574 AND obstacle_radius > 0.6266)
+  Decisiveness: 0.4076 | FPR: 59.24% | FNR: 0.00%
+  Mismatches: 93/157 | TP=0 TN=64 FP=93 FN=0
+  Reason: FP rate 59.2% >= 20% | FN rate 0.0% <= 5% | 93 mismatches on 157 runs
+
+──────────────────────────────────────────────────────────────────────
+INCONSISTENCY EXAMPLES SUMMARY
+──────────────────────────────────────────────────────────────────────
+Total inconsistent examples collected: 999
+Counterfactuals that flip verdict: 2736
+Average L1 distance of perturbations: 0.693668
+
+======================================================================
