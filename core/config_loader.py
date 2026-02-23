@@ -189,10 +189,12 @@ def load_pipeline_config(path: str) -> PipelineConfig:
     # Inference section (optional)
     inf_raw = raw.get("inference", {})
 
+    _default_depths = [2, 3, 4, 5, None]
+
     pipeline = PipelineConfig(
         grammar=grammar,
         thresholds=thresholds,
-        dt_depths=inf_raw.get("dt_depths", PipelineConfig.dt_depths),
+        dt_depths=inf_raw.get("dt_depths", _default_depths),
         dt_min_samples_leaf=inf_raw.get("dt_min_samples_leaf", 5),
         rf_n_estimators=inf_raw.get("rf_n_estimators", 100),
         rf_max_depth=inf_raw.get("rf_max_depth", 4),
