@@ -4,7 +4,7 @@ Pre-parse validator for LLM output normalization.
 Handles Unicode variants, hidden characters, and alternative operator
 representations before the parser sees the input.
 """
-
+import re
 from typing import List, Tuple
 from validators.base import ValidationWarning, ValidationViolation
 
@@ -51,7 +51,6 @@ class PreParseValidator:
                 normalized = normalized.replace(h, "")
 
         # Detect invalid operators
-        import re
         for op in re.findall(r'[<>=!∧∨&|]{2,}', normalized):
             if op not in self.ALLOWED_OPERATORS:
                 violations.append(

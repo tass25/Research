@@ -4,10 +4,13 @@ Consistency checker for semantic validation.
 Checks if rule verdicts match observed simulation outcomes.
 """
 
+import logging
 from typing import List, Tuple
 from core.schema import Rule
 from data.simulation_trace import SimulationDataset
 from data.semantic_result import ConsistencyIssue
+
+logger = logging.getLogger(__name__)
 
 
 class ConsistencyChecker:
@@ -52,7 +55,7 @@ class ConsistencyChecker:
                 continue
             except Exception as e:
                 # Other evaluation error
-                print(f"Warning: Failed to evaluate rule on {trace.input_vector}: {e}")
+                logger.warning("Failed to evaluate rule on %s: %s", trace.input_vector, e)
                 continue
             
             # Determine rule verdict based on rule set type

@@ -18,13 +18,20 @@ class StructureValidator:
     3. DoS protection (prevent pathological LLM outputs)
     """
     
-    def __init__(self, max_depth=10, max_predicates=20):
+    def __init__(self, max_depth: int = 10, max_predicates: int = 20):
         """Initialize with complexity bounds.
         
         Args:
-            max_depth: Maximum nesting depth
-            max_predicates: Maximum total number of relations
+            max_depth: Maximum nesting depth (must be > 0)
+            max_predicates: Maximum total number of relations (must be > 0)
+        
+        Raises:
+            ValueError: If bounds are non-positive.
         """
+        if max_depth <= 0:
+            raise ValueError(f"max_depth must be positive, got {max_depth}")
+        if max_predicates <= 0:
+            raise ValueError(f"max_predicates must be positive, got {max_predicates}")
         self.max_depth = max_depth
         self.max_predicates = max_predicates
 

@@ -45,5 +45,11 @@ output/
 *.tmp
 *.bak
 
-# Jupyter 
-.ipynb_checkpoints/
+# Type checking
+.mypy_cache/
+
+# Linting
+.ruff_cache/
+
+# Config overrides (keep config.yaml template)
+config.local.yaml

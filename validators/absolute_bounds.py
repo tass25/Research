@@ -5,7 +5,7 @@ Validates that constants are within physically/logically admissible ranges
 defined by the Operational Design Domain (ODD).
 """
 
-from typing import Tuple
+from typing import Dict, List, Tuple
 from core.schema import Rule, Relation, Conjunction, Disjunction, Variable, Constant
 from validators.base import ValidationViolation
 
@@ -21,12 +21,18 @@ class AbsoluteBoundValidator:
         - ego_speed < 1 when original was < 30 → NO VIOLATION (Priority 3)
     """
     
-    def __init__(self, variable_bounds: dict[str, Tuple[float, float]]):
+    def __init__(self, variable_bounds: Dict[str, Tuple[float, float]]):
         """Initialize with ODD bounds.
         
         Args:
-            variable_bounds: Dict mapping variable names to (min, max) tuples
+            variable_bounds: Dict mapping variable names to (min, max) tuples.
+        
+        Raises:
+            ValueError: If any bound has min > max.
         """
+        for var, (lo, hi) in variable_bounds.items():
+            if lo > hi:
+                raise ValueError(f"Invalid bounds for '{var}': {lo} > {hi}")
         self.variable_bounds = variable_bounds
 
     def validate(self, rule: Rule):

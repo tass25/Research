@@ -177,7 +177,11 @@ class OverfittingDetector:
         return None
         
     def _check_unnecessary_restrictions(self, rule, evidence):
-        # Placeholder as implementation wasn't fully detailed in prompt
+        """Detect predicates that restrict the rule without improving safety.
+
+        TODO: Implement by comparing rule accuracy with/without each predicate.
+        Returns None until implemented — the call-site already handles None.
+        """
         return None
     
     def _compute_risk_score(

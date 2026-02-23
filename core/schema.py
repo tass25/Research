@@ -90,6 +90,10 @@ class Conjunction:
     """
     items: List[PredicateItem]
 
+    def __post_init__(self) -> None:
+        if not self.items:
+            raise ValueError("Conjunction must have at least one predicate")
+
     def evaluate(self, env: Dict[str, float]) -> bool:
         return all(item.evaluate(env) for item in self.items)
 
@@ -101,6 +105,10 @@ class Disjunction:
     Can contain Relations or Conjunctions.
     """
     items: List[ClauseItem]
+
+    def __post_init__(self) -> None:
+        if not self.items:
+            raise ValueError("Disjunction must have at least one clause")
 
     def evaluate(self, env: Dict[str, float]) -> bool:
         return any(item.evaluate(env) for item in self.items)
