@@ -1,0 +1,55 @@
+
+#  adjust thresholds for your system.
+# ──────────────────────────────────────────────────────────────────────────
+
+grammar:
+  allowed_variables:
+    - initial_distance_to_obstacle
+    - initial_speed
+    - obstacle_radius
+    - initial_heading_error
+    # Uncomment for dynamic obstacle systems:
+    # - obstacle_speed
+    # - obstacle_heading
+
+  variable_bounds:
+    initial_distance_to_obstacle: [0.0, 100.0]
+    initial_speed:                [0.0,  10.0]
+    obstacle_radius:              [0.01,  5.0]
+    initial_heading_error:        [-3.14159, 3.14159]
+    # obstacle_speed:             [0.0,   5.0]
+    # obstacle_heading:           [-3.14159, 3.14159]
+
+thresholds:
+  # Semantic validation
+  consistency_threshold:        0.95    # Min consistency score to pass
+  overfitting_risk_threshold:   0.70    # Max overfitting risk allowed
+
+  # Overfitting detection
+  boundary_sensitivity:         0.50    # L1 perturbation threshold
+  constant_specificity_decimals: 1      # Max decimals before flagging
+  train_test_gap:               0.15    # Max accuracy gap (train - test)
+
+  # Minimality analysis
+  minimality_threshold:         0.70    # Min minimality score to pass
+
+  # Rule selection (Group C)
+  min_false_positive_rate:      0.20    # >= 20% spurious failures
+  max_false_negative_rate:      0.05    # <= 5% missed real failures
+
+  # Structure limits
+  max_depth:                    10
+  max_predicates:               20
+
+inference:
+  dt_depths:            [2, 3, 4, 5, null]   # null = unlimited
+  dt_min_samples_leaf:  5
+  rf_n_estimators:      100
+  rf_max_depth:         4
+  hc_n_estimators:      200
+  hc_max_depth:         5
+  hc_min_confidence:    0.75
+  hc_min_support:       10
+
+top_k: 10
+random_seed: 42

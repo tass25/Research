@@ -8,7 +8,7 @@ from .semantic_result import (
     ContradictionIssue, 
     OverfittingIndicator
 )
-from .minimality_result import RelationChange, MinimalityResult  # 🆕 ADD THIS
+from .minimality_result import RelationChange, MinimalityResult
 
 __all__ = [
     "SimulationTrace",
@@ -19,6 +19,6 @@ __all__ = [
     "ConsistencyIssue",
     "ContradictionIssue",
     "OverfittingIndicator",
-    "RelationChange",       # 🆕 ADD THIS
-    "MinimalityResult",     # 🆕 ADD THIS
+    "RelationChange",
+    "MinimalityResult",
 ]

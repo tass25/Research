@@ -4,10 +4,13 @@ Consistency checker for semantic validation.
 Checks if rule verdicts match observed simulation outcomes.
 """
 
+import logging
 from typing import List, Tuple
 from core.schema import Rule
 from data.simulation_trace import SimulationDataset
 from data.semantic_result import ConsistencyIssue
+
+logger = logging.getLogger(__name__)
 
 
 class ConsistencyChecker:
@@ -38,11 +41,15 @@ class ConsistencyChecker:
         
         Returns:
             (consistency_score, list_of_issues)
+            
+        Note:
+            Returns 1.0 when no traces are applicable (vacuously consistent).
+            Previously returned 0.0 which caused false failures.
         """
         matches = 0
         total_applicable = 0
         issues = []
-        
+    
         for trace in dataset.traces:
             try:
                 # Evaluate rule on input
@@ -52,21 +59,21 @@ class ConsistencyChecker:
                 continue
             except Exception as e:
                 # Other evaluation error
-                print(f"Warning: Failed to evaluate rule on {trace.input_vector}: {e}")
+                logger.warning("Failed to evaluate rule on %s: %s", trace.input_vector, e)
                 continue
-            
+
             # Determine rule verdict based on rule set type
             if self.rule_set_type == "Pass":
                 rule_verdict = "Pass" if rule_holds else "Inconclusive"
             else:  # Fail
                 rule_verdict = "Fail" if rule_holds else "Inconclusive"
-            
+        
             # Skip if rule doesn't apply
             if rule_verdict == "Inconclusive":
                 continue
-            
+        
             total_applicable += 1
-            
+        
             # Check consistency
             if rule_verdict == trace.observed_outcome:
                 matches += 1
@@ -76,10 +83,10 @@ class ConsistencyChecker:
                     rule_verdict=rule_verdict,
                     observed_outcome=trace.observed_outcome
                 ))
-        
+    
         # Compute score
         if total_applicable == 0:
-            return 0.0, issues  # Rule doesn't apply to any traces
-        
+            return 1.0, issues  # No applicable traces = vacuously consistent
+    
         score = matches / total_applicable
         return score, issues

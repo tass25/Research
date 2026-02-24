@@ -20,6 +20,16 @@ class GrammarConfig:
     allowed_variables: Set[str]
     variable_bounds: Dict[str, Tuple[float, float]]
 
+    def __post_init__(self) -> None:
+        """Validate configuration on construction."""
+        if not self.allowed_variables:
+            raise ValueError("allowed_variables must not be empty")
+        for var, (lo, hi) in self.variable_bounds.items():
+            if lo > hi:
+                raise ValueError(
+                    f"Invalid bounds for '{var}': lower ({lo}) > upper ({hi})"
+                )
+
 
 # Default configuration for Autonomous Driving System (ADS)
 DEFAULT_ADS_CONFIG = GrammarConfig(

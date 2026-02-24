@@ -51,9 +51,3 @@ class ArithOp(Enum):
         if s not in mapping:
             raise ValueError(f"Invalid arithmetic operator: {s}")
         return mapping[s]
-
-
-class LogicOp(Enum):
-    """Logical operators allowed in the grammar."""
-    AND = "∧"
-    OR = "∨"

@@ -1,19 +1,33 @@
-# Validators — Syntactic & Structural Validation
+# Validators — Syntactic & Structural Validation (Priority 1)
 
 This package implements the **first line of defense** against invalid rules: syntactic normalization, structural complexity checks, ODD bound enforcement, and rejection tracking. These validators run *before* semantic or minimality analysis, catching issues that would make downstream analysis meaningless.
 
-## Why This Exists
+## Why This Folder Exists
 
 LLM-generated rules frequently contain artifacts that a grammar parser alone cannot handle:
-- **Unicode variants** (example, `≤` instead of `<=`, zero-width spaces)
+- **Unicode variants** (e.g., `≤` instead of `<=`, zero-width spaces)
 - **Structural complexity** (deeply nested rules that are computationally intractable to verify)
-- **Physically impossible constants** (example, `ego_speed > 200` when the ODD maximum is 50 m/s)
+- **Physically impossible constants** (e.g., `ego_speed > 200` when the ODD maximum is 50 m/s)
 
-This package addresses each category with a dedicated, composable validator.
+This package addresses each category with a dedicated, composable validator. By catching these issues early (Priority 1), the system avoids wasting compute on semantic or minimality analysis of fundamentally broken rules.
+
+## Folder Structure
+
+```
+validators/
+├── __init__.py           # Re-exports all validators and result types
+├── base.py               # ValidationWarning, ValidationViolation
+├── preparse.py           # LLM output normalization (Unicode, hidden chars)
+├── structure.py          # Complexity limits (depth, predicate count)
+└── absolute_bounds.py    # ODD bound enforcement
+```
+
 
 ## Approach
 
 The validators follow a **pipeline pattern**: each validator can be applied independently or chained. They produce typed `ValidationWarning` (non-fatal, auto-corrected) and `ValidationViolation` (fatal, rule rejected) objects, ensuring clear separation between recoverable issues and hard failures.
+
+**Config-driven validation:** All structural and bounds thresholds can be set via the config dictionary or YAML, and are automatically respected by downstream semantic validation.
 
 ## Files
 
@@ -22,12 +36,12 @@ The validators follow a **pipeline pattern**: each validator can be applied inde
 Defines the two result types used by all validators:
 
 - **`ValidationWarning`** — A non-fatal issue that was automatically corrected:
-  - `category`: Type of issue (example, `"unicode"`, `"hidden"`)
+  - `category`: Type of issue (e.g., `"unicode"`, `"hidden"`)
   - `message`: Human-readable description
   - `original` / `corrected`: What was found and what it was normalized to
 
 - **`ValidationViolation`** — A fatal issue that prevents rule acceptance:
-  - `category`: Type of violation (example, `"bounds"`, `"structure"`, `"operators"`)
+  - `category`: Type of violation (e.g., `"bounds"`, `"structure"`, `"operators"`)
   - `severity`: Severity level (`"error"`)
   - `message`: Human-readable description
   - `location`: Where in the rule the violation was found
@@ -72,26 +86,57 @@ The `AbsoluteBoundValidator` ensures all constants are within the physically/log
 - For each `Variable op Constant` or `Constant op Variable` relation, checks whether the constant falls within the variable's ODD bounds
 - Example: `ego_speed < 200` with ODD bounds `[0, 50]` → **VIOLATION** (200 > 50)
 
-**Important distinction:** This validator checks **absolute bounds** (physical limits from the ODD). It does NOT check **relative tightening** (example, original rule had `< 30`, refined has `< 1`). Relative minimality analysis is handled by the `minimality/` package (Priority 3).
+**Important distinction:** This validator checks **absolute bounds** (physical limits from the ODD). It does NOT check **relative tightening** (e.g., original rule had `< 30`, refined has `< 1`). Relative minimality analysis is handled by the `minimality/` package (Priority 3).
 
-### `statistics.py` — Rejection Tracking
+### `__init__.py` — Package Exports
 
-The `RejectionStatistics` dataclass tracks rejection reasons across validation runs:
+Re-exports all public classes for convenient importing:
+```python
+from validators import (
+    ValidationWarning, ValidationViolation,
+    PreParseValidator, StructureValidator, AbsoluteBoundValidator,
+)
+```
 
-| Counter | Tracks |
-|---------|--------|
-| `syntax_errors` | Lark parse failures |
-| `invalid_operators` | Unknown operator sequences |
-| `structure_errors` | Depth/predicate limit violations |
-| `bound_errors` | ODD bound violations |
-| `unicode_issues` | Unicode normalization occurrences |
 
-**Why track rejections?** This enables:
-1. **LLM comparison** — Which models produce which failure types?
-2. **Prompt optimization** — Target common failure modes in LLM prompts
-3. **Safety insights** — Are rejections clustering in safety-critical categories?
+## Usage
+
+```python
+from validators import PreParseValidator, StructureValidator, AbsoluteBoundValidator
+from core.config import DEFAULT_ADS_CONFIG
+
+# Step 1: Normalize LLM output
+pre = PreParseValidator()
+cleaned, warnings, violations = pre.normalize_and_validate("ego_speed ≤ 30 ∧ dist_front ≥ 5")
+
+# Step 2: Parse (via parsers/lark_parser.py) — produces a typed Rule
+
+# Step 3: Check structural complexity (configurable)
+struct = StructureValidator(max_depth=10, max_predicates=20)
+violations = struct.validate(parsed_rule)
+
+# Step 4: Check ODD bounds (configurable)
+bounds = AbsoluteBoundValidator(DEFAULT_ADS_CONFIG.variable_bounds)
+violations = bounds.validate(parsed_rule)
+
+# All thresholds can also be set via config and passed through the pipeline for semantic validation.
+```
+
+## Where It's Used
+
+| Consumer | What It Uses |
+|----------|-------------|
+| `examples/paper_examples.py` | `PreParseValidator` for Unicode normalization demo |
+| `run_pipeline.py` | Validators run as Priority 1 before inference |
+| `tests/test_validators.py` | Comprehensive unit tests for all validators |
 
 ## Dependencies
 
-- Python standard library (`dataclasses`, `typing`, `re`)
-- Internal: `core.schema`, `validators.base`
+- **Python standard library** (`dataclasses`, `typing`, `re`)
+- **Internal:** `core.schema` (AST node types)
+
+## Grammar Design Decision
+
+> [!NOTE]
+> The **Lark parser** (`grammar/rules.lark`) accepts arithmetic expressions (`+`, `-`, `*`, `/`) for permissive handling of real-world LLM outputs, while **`shared/grammar_validation.py`** validates against the paper's grammar G (no arithmetic) and issues **warnings** (not errors) for arithmetic operators. This is a deliberate design: the parser is permissive, the grammar validator is strict. Both are correct in their respective roles.
+

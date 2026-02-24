@@ -146,11 +146,10 @@ class OperationalRuleParser:
     def parse(self, rule_str: str):
         """Parse a rule string into a typed Rule object."""
         try:
-            # Normalize Unicode operators (fallback for compatibility)
-            normalized = rule_str.replace("AND", "∧").replace("OR", "∨")
-            
             # Strip whitespace and parse
-            result = self.parser.parse(normalized.strip())
+            # Note: the Lark grammar already handles both "AND"/"∧" and "OR"/"∨"
+            # natively, so no normalization is needed here.
+            result = self.parser.parse(rule_str.strip())
             
             # Ensure result is a Disjunction
             if not isinstance(result, Disjunction):
@@ -169,5 +168,6 @@ class OperationalRuleParser:
         try:
             rule = self.parse(rule_str)
             return rule, []
-        except ValueError as e:
+        except (ValueError, TypeError, KeyError, AttributeError,
+                exceptions.LarkError) as e:
             return None, [str(e)]

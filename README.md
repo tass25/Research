@@ -56,62 +56,119 @@ This project implements a **multi-layered validation pipeline** that catches the
 ## Project Structure
 
 ```
-├── core/                       # Type system and configuration
-│   ├── types.py               #   Operator enumerations (RelOp, ArithOp, LogicOp)
-│   ├── schema.py              #   Grammar AST dataclasses (Rule → Disjunction → Conjunction → Relation → Expr)
-│   └── config.py              #   ODD configuration (allowed variables, physical bounds)
+.
+├── config.yaml                 # YAML configuration (thresholds, grammar, inference settings)
+├── pyproject.toml              # Package metadata, tool configs (pytest, mypy, ruff, coverage)
+├── requirements.txt            # Pinned pip dependencies
+├── Makefile                    # Common dev tasks (test, lint, run, clean)
+├── run_pipeline.py             # End-to-end pipeline: Group A → B → Layer 1 → C → Layer 2
 │
-├── grammar/                    # Grammar definition
+├── core/                       # Type system, configuration, and logging
+│   ├── types.py               #   Operator enumerations (RelOp, ArithOp)
+│   ├── schema.py              #   Grammar AST dataclasses (Rule → Disjunction → Conjunction → Relation → Expr)
+│   ├── config.py              #   ODD configuration (allowed variables, physical bounds)
+│   ├── config_loader.py       #   YAML/TOML configuration loader (GrammarConfig, PipelineConfig)
+│   ├── logging_config.py      #   Centralized colored logging with optional file output
+│   └── __init__.py            #   Package init (exports __version__)
+│
+├── grammar/                    # Formal grammar definition
 │   └── rules.lark            #   Lark LALR grammar for operational rules
 │
 ├── parsers/                    # Parsing logic
-│   └── lark_parser.py        #   String → Typed Rule AST transformation
+│   └── lark_parser.py        #   String → Typed Rule AST (RuleTransformer + OperationalRuleParser)
 │
-├── data/                       # Shared data structures
+├── data/                       # Shared data structures & result models
 │   ├── simulation_trace.py    #   SimulationTrace, SimulationDataset
 │   ├── counterfactual_evidence.py  #   CounterfactualPair, CounterfactualEvidence
-│   ├── semantic_result.py     #   SemanticValidationResult and sub-types
-│   └── minimality_result.py   #   RelationChange, MinimalityResult
+│   ├── semantic_result.py     #   SemanticValidationResult, ConsistencyIssue, ContradictionIssue
+│   ├── minimality_result.py   #   RelationChange, MinimalityResult
+│   └── __init__.py            #   Re-exports all public data classes
 │
 ├── validators/                 # Syntactic & structural validation (Priority 1)
 │   ├── base.py                #   ValidationWarning, ValidationViolation
 │   ├── preparse.py            #   LLM output normalization (Unicode, hidden chars)
 │   ├── structure.py           #   Complexity limits (depth, predicate count)
 │   ├── absolute_bounds.py     #   ODD bound enforcement
-│   └── statistics.py          #   Rejection reason tracking
+│   └── __init__.py            #   Re-exports all validators
 │
 ├── semantic/                   # Semantic validation (Priority 2)
 │   ├── consistency_checker.py #   Rule vs. simulation data consistency
 │   ├── contradiction_checker.py #  Cross-rule contradiction detection
 │   ├── overfitting_detector.py #  Overfitting indicators (boundary sensitivity, constant specificity)
 │   ├── counterfactual_generator.py # L1 minimal-change counterfactual search
-│   └── semantic_validator.py  #   Orchestrator combining all semantic checks
+│   ├── semantic_validator.py  #   Orchestrator combining all semantic checks
+│   └── __init__.py            #   Re-exports all semantic classes
 │
 ├── minimality/                 # Change minimality analysis (Priority 3)
 │   ├── change_extractor.py    #   Relation-level change detection & classification
 │   ├── bound_analyzer.py      #   Tightening severity relative to ODD
 │   ├── justification_checker.py #  Evidence-based justification of changes
 │   ├── minimality_scorer.py   #   Quantitative minimality score computation
-│   └── minimality_validator.py #  Pipeline orchestrator
+│   ├── minimality_validator.py #  Pipeline orchestrator
+│   └── __init__.py            #   Re-exports all minimality classes
 │
-├── examples/                   # Demonstration scripts
+├── cbf_data/                   # Group A — CBFKIT data integration
+│   ├── loader.py              #   SimulationDataset, load_dataset(), PairedComparison
+│   ├── metadata.py            #   System/feature metadata, physical bounds
+│   ├── adapter.py             #   Bidirectional converter: cbf_data ↔ semantic data layer
+│   ├── __init__.py            #   Re-exports adapter functions
+│   └── datasets/              #   Raw CSV files per system/controller
+│       ├── unicycle_static_obstacle/{robust_evolved,robust_vanilla}/
+│       └── unicycle_dynamic_obstacle/{robust_evolved,robust_vanilla}/
+│
+├── rule_inference/             # Group B — ML-based rule extraction
+│   ├── tree_extractor.py      #   Decision tree path → DNF rules, depth sweep
+│   ├── forest_extractor.py    #   Random forest top-k tree extraction
+│   ├── grammar_checker.py     #   Thin wrapper → shared.grammar_validation
+│   ├── rule_export.py         #   CSV export and inference reports
+│   └── __init__.py            #   Package init
+│
+├── rule_validation/            # Group C — Rule evaluation & selection
+│   ├── rule_evaluator.py      #   Decisiveness, FPR, FNR on D_evolved
+│   ├── rule_selector.py       #   Top-k inconsistent rule selection
+│   ├── counterfactual_hints.py #  L1-minimal perturbation candidates
+│   ├── validation_report.py   #   CSV and text report generation
+│   └── __init__.py            #   Package init
+│
+├── shared/                     # Shared utilities (Groups B & C)
+│   ├── grammar_validation.py  #   Grammar G compliance validation (single source of truth)
+│   └── __init__.py            #   Package init
+│
+├── examples/                   # Executable demonstration scripts
 │   ├── paper_examples.py      #   Grammar enforcement demo (Part 1)
 │   ├── semantic_examples.py   #   Semantic validation demo (Part 2)
-│   └── minimality_examples.py #   Minimality analysis demo (Part 3)
+│   ├── minimality_examples.py #   Minimality analysis demo (Part 3)
+│   └── __init__.py            #   Package init
 │
-├── tests/                      # Test suite (45 tests)
-│   ├── test_change_extractor.py
-│   ├── test_bound_analyzer.py
-│   ├── test_justification_checker.py
-│   ├── test_minimality_scorer.py
-│   ├── test_minimality_validator.py
-│   └── test_minimality_examples.py
+├── tests/                      # Test suite (312 tests, 82%+ coverage)
+│   ├── test_core.py           #   core/ types, schema, config
+│   ├── test_parser.py         #   parsers/ lark_parser
+│   ├── test_validators.py     #   validators/ preparse, structure, absolute_bounds
+│   ├── test_grammar_validation.py # shared/ grammar_validation
+│   ├── test_data_layer.py     #   data/ all result models
+│   ├── test_semantic.py       #   semantic/ all checkers
+│   ├── test_change_extractor.py #  minimality/ change_extractor
+│   ├── test_bound_analyzer.py #   minimality/ bound_analyzer
+│   ├── test_justification_checker.py # minimality/ justification_checker
+│   ├── test_minimality_scorer.py #  minimality/ minimality_scorer
+│   ├── test_minimality_validator.py # minimality/ minimality_validator
+│   ├── test_minimality_examples.py # minimality/ integration tests
+│   ├── test_cbf_data.py       #   cbf_data/ loader, metadata, adapter
+│   ├── test_rule_inference.py #   rule_inference/ all modules
+│   ├── test_rule_validation.py #  rule_validation/ all modules
+│   ├── test_config_and_logging.py # core/ config_loader, logging_config
+│   └── __init__.py            #   Package init
 │
-├── pytest.ini                  # Pytest configuration
-└── .gitignore
+└── output/                     # Generated pipeline results (gitignored)
+    ├── unicycle_static_obstacle/
+    │   ├── robust_evolved/    #   candidate_rules.csv, selected_rules.csv, reports, ...
+    │   └── robust_vanilla/
+    └── unicycle_dynamic_obstacle/
+        ├── robust_evolved/
+        └── robust_vanilla/
 ```
 
-> 📖 **Each folder contains its own detailed `README.md`** with file-by-file explanations, design decisions, and rationale.
+> **Each folder contains its own detailed `README.md`** with file-by-file explanations, design decisions, and rationale.
 
 ## Installation
 
@@ -123,7 +180,11 @@ This project implements a **multi-layered validation pipeline** that catches the
    ```
 3. **Install dependencies:**
    ```bash
-   pip install lark numpy pytest
+   pip install -r requirements.txt
+   ```
+   Or via the Makefile:
+   ```bash
+   make install
    ```
 
 ## Quick Start
@@ -156,31 +217,76 @@ python -m examples.semantic_examples      # Semantic validation
 python -m examples.minimality_examples    # Minimality analysis
 ```
 
+### Run the CBFKIT pipeline (Groups A → B → C)
+```bash
+# All 4 system/controller configurations
+python run_pipeline.py
+
+# Single configuration
+python run_pipeline.py --system unicycle_static_obstacle --controller robust_evolved
+
+# With debug logging and log file
+python run_pipeline.py --verbose --log-file pipeline.log
+
+# With custom YAML config
+python run_pipeline.py --config config.yaml
+```
+
+Results are written to `output/{system}/{controller}/`.
+
+## Configuration
+
+All thresholds, inference hyperparameters, and grammar settings are configurable via `config.yaml` or through Environment Variables (using the `ADS_` prefix):
+
+| Section | Key Settings | Env Var Override Example |
+|---------|-------------|-------------------------|
+| `grammar` | `allowed_variables`, `variable_bounds` | (Use YAML only) |
+| `thresholds` | `consistency_threshold`, `minimality_threshold` | `ADS_CONSISTENCY_THRESHOLD="0.99"` |
+| `inference` | `dt_depths`, `rf_n_estimators`, `hc_min_confidence` | `ADS_RF_N_ESTIMATORS="200"` |
+
+See `config.yaml` for the full list with inline comments.
+
+## Makefile Targets
+
+| Target | Description |
+|--------|-------------|
+| `make test` | Run the full test suite |
+| `make test-cov` | Run tests with coverage report (HTML + terminal) |
+| `make lint` | Run ruff linter |
+| `make typecheck` | Run mypy type checker |
+| `make run-all` | Run pipeline for all system/controller combinations |
+| `make examples` | Run all example scripts |
+| `make clean` | Remove generated files and caches |
+
 ## Testing
 
 ```bash
 # Run all tests
 python -m pytest
 
-# Run with coverage
-python -m pytest --cov=minimality --cov=data
+# Run with full coverage
+make test-cov
 
-# Run a specific test
+# Run a specific test file
 python -m pytest tests/test_minimality_scorer.py -v
 ```
 
-**Current status:** 45 tests, all passing.
+**Current status:** 312 tests, all passing, 82%+ line coverage across all 10 production packages.
 
 ## Key Concepts
 
 | Term | Definition |
 |------|-----------|
 | **ODD** | Operational Design Domain — physical/logical limits on variables |
-| **Tightening** | Making a bound more restrictive (example, `< 30` → `< 25`) |
-| **Loosening** | Making a bound less restrictive (example, `< 30` → `< 35`) |
+| **Tightening** | Making a bound more restrictive (e.g., `< 30` → `< 25`) |
+| **Loosening** | Making a bound less restrictive (e.g., `< 30` → `< 35`) |
 | **Counterfactual** | Minimally-modified input that flips the rule verdict |
 | **Minimality score** | 0.0 (unjustified changes) to 1.0 (all changes evidence-backed) |
 | **R_Pass / R_Fail** | Rule sets: conditions for passing vs. failing scenarios |
+| **D_legacy** | Simulation runs from the legacy (vanilla) controller |
+| **D_evolved** | Simulation runs from the evolved (CBF) controller |
+| **Decisiveness** | $D_G = 1 - N_{\text{mismatch}} / N$ — fraction of non-contradicted predictions |
+| **DNF** | Disjunctive Normal Form — OR of ANDs of relational predicates |
 
 ## Dependencies
 
@@ -188,8 +294,13 @@ python -m pytest tests/test_minimality_scorer.py -v
 |---------|---------|---------|
 | `lark` | ≥ 1.0 | LALR parser for grammar enforcement |
 | `numpy` | ≥ 1.20 | Counterfactual generation (Dirichlet sampling) |
-| `pytest` | ≥ 7.0 | Test framework |
-| `pytest-cov` | ≥ 4.0 | Test coverage (optional) |
+| `scikit-learn` | ≥ 1.0 | Decision tree / random forest rule extraction |
+| `pandas` | ≥ 1.3 | Data loading utilities |
+| `openpyxl` | ≥ 3.0 | Excel file reading |
+| `pyyaml` | ≥ 6.0 | YAML config file loading |
+| `colorama` | ≥ 0.4 | Colored terminal output (Windows-safe) |
+| `pytest` | ≥ 7.0 | Test framework (dev) |
+| `pytest-cov` | ≥ 4.0 | Coverage reporting (dev) |
 
 ## Defining Rules
 
@@ -198,6 +309,9 @@ Rules use a Python-like syntax supporting:
 - **Arithmetic:** `+`, `-`, `*`, `/`
 - **Relations:** `<`, `<=`, `>`, `>=`, `=`, `!=`
 - **Logic:** `∧` / `AND` (conjunction), `∨` / `OR` (disjunction)
+
+> [!NOTE]
+> **Grammar design decision:** The Lark parser (`grammar/rules.lark`) accepts arithmetic expressions for permissive LLM output handling, while `shared/grammar_validation.py` validates against the paper's grammar G (no arithmetic) and issues warnings. This is deliberate — the parser is permissive, the grammar validator is strict.
 
 **Example:**
 ```

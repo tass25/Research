@@ -35,6 +35,15 @@ class OverfittingDetector:
     not correctly grounded in the provided ODD, yielding many unnecessary 
     nominal restrictions."
     """
+
+    def __init__(self, rule_set_type: str = "Pass"):
+        """Initialize detector with the rule set type.
+        
+        Args:
+            rule_set_type: "Pass" or "Fail" — needed so train/test gap
+                           evaluation uses the correct semantics.
+        """
+        self.rule_set_type = rule_set_type
     
     def detect_overfitting(
         self,
@@ -74,7 +83,7 @@ class OverfittingDetector:
         
         # Indicator 4: Unnecessary restrictions
         restriction_indicator = self._check_unnecessary_restrictions(
-            rule, counterfactual_evidence
+            rule, counterfactual_evidence, training_data
         )
         if restriction_indicator:
             indicators.append(restriction_indicator)
@@ -151,22 +160,26 @@ class OverfittingDetector:
         self,
         rule: Rule,
         training_data: SimulationDataset,
-        test_data: SimulationDataset
+        test_data: SimulationDataset,
+        threshold: float = 0.15
     ) -> Optional[OverfittingIndicator]:
-        """Check for train/test performance gap."""
-        # Evaluate on training data
-        train_score, _ = ConsistencyChecker("Pass").check_consistency(
+        """Check for train/test performance gap.
+        
+        Uses self.rule_set_type so Fail-set rules are evaluated correctly.
+        """
+        # Evaluate on training data — use actual rule_set_type, not hardcoded "Pass"
+        train_score, _ = ConsistencyChecker(self.rule_set_type).check_consistency(
             rule, training_data
         )
         
         # Evaluate on test data
-        test_score, _ = ConsistencyChecker("Pass").check_consistency(
+        test_score, _ = ConsistencyChecker(self.rule_set_type).check_consistency(
             rule, test_data
         )
         
         gap = train_score - test_score
         
-        if gap > 0.15:  # 15% performance drop
+        if gap > threshold:  # Configurable performance drop
             return OverfittingIndicator(
                 indicator_type="train_test_gap",
                 severity=min(gap / 0.3, 1.0),  # Normalize to [0, 1]
@@ -176,8 +189,66 @@ class OverfittingDetector:
         
         return None
         
-    def _check_unnecessary_restrictions(self, rule, evidence):
-        # Placeholder as implementation wasn't fully detailed in prompt
+    def _check_unnecessary_restrictions(
+        self,
+        rule: Rule,
+        evidence: CounterfactualEvidence,
+        training_data: Optional[SimulationDataset] = None,
+    ) -> Optional[OverfittingIndicator]:
+        """Detect predicates that restrict the rule without improving safety.
+
+        Strategy: for Conjunction rules, try removing each predicate and
+        check if the consistency score stays the same or improves.  If
+        removing a predicate does NOT hurt consistency, it is likely
+        unnecessary.
+        """
+        if training_data is None:
+            return None
+
+        # Only works for conjunction rules (most common after inference)
+        if not isinstance(rule, (Conjunction, Disjunction)):
+            return None
+
+        # Flatten to get the list of items to test
+        if isinstance(rule, Disjunction) and len(rule.items) == 1:
+            inner = rule.items[0]
+            if isinstance(inner, Conjunction):
+                items = inner.items
+            else:
+                return None  # Single relation, nothing to drop
+        elif isinstance(rule, Conjunction):
+            items = rule.items
+        else:
+            return None  # Multi-clause disjunction, too complex for this heuristic
+
+        if len(items) <= 1:
+            return None  # Nothing to drop
+
+        # Baseline score with all predicates
+        checker = ConsistencyChecker(self.rule_set_type)
+        baseline_score, _ = checker.check_consistency(rule, training_data)
+
+        unnecessary = []
+        for i, item in enumerate(items):
+            # Build rule without predicate i
+            remaining = [it for j, it in enumerate(items) if j != i]
+            if len(remaining) == 1:
+                reduced_rule = Disjunction([remaining[0]])
+            else:
+                reduced_rule = Disjunction([Conjunction(remaining)])
+
+            reduced_score, _ = checker.check_consistency(reduced_rule, training_data)
+            if reduced_score >= baseline_score - 1e-9:
+                unnecessary.append(str(item))
+
+        if unnecessary:
+            return OverfittingIndicator(
+                indicator_type="unnecessary_restriction",
+                severity=len(unnecessary) / len(items),
+                evidence=f"Removing these predicates does not hurt consistency: {unnecessary}",
+                affected_variables=set(),
+            )
+
         return None
     
     def _compute_risk_score(

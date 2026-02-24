@@ -1,136 +1,203 @@
-# Tests — Minimality Analysis Test Suite
+# Tests — Full Project Test Suite
 
-This folder contains 45 unit tests covering the minimality analysis pipeline (`minimality/` package). Tests are written using `pytest` and are configured via `pytest.ini` in the project root.
+**312 unit tests** across 16 test files covering all production packages. Written with `pytest`, configured via `pyproject.toml`.
 
-## Why This Test Suite Exists
+## Why This Folder Exists
 
-The minimality analysis involves multiple interacting components (change extraction, bound analysis, justification checking, scoring, orchestration). Each component has specific correctness criteria that must be verified independently and in integration. This test suite ensures:
-- Each component handles edge cases correctly
-- The pipeline produces expected results end-to-end
-- Scoring formulas behave as documented
-- Regressions are caught immediately
+Each production package (`core`, `data`, `parsers`, `validators`, `shared`, `semantic`, `minimality`, `rule_inference`, `rule_validation`, `cbf_data`) has independent correctness criteria. This suite ensures every component handles edge cases correctly, the pipeline produces expected end-to-end results, scoring formulas behave as documented, and regressions are caught immediately. Current line coverage: **82.46%**.
 
-## Test Configuration
+## Folder Structure
 
-```ini
-# pytest.ini
-[pytest]
-testpaths = tests
-python_files = test_*.py
-python_classes = Test*
-python_functions = test_*
-addopts = -v --tb=short
 ```
-
-**Run all tests:**
-```bash
-python -m pytest
-```
-
-**Run a specific test file:**
-```bash
-python -m pytest tests/test_minimality_scorer.py -v
+tests/
+├── __init__.py                       # Package init (pytest discovery)
+├── test_bound_analyzer.py            # 11 tests — BoundAnalyzer severity
+├── test_cbf_data.py                  # 28 tests — Loader, metadata, adapter
+├── test_change_extractor.py          # 16 tests — Change detection
+├── test_config_and_logging.py        # 20 tests — Config loading, logging setup
+├── test_core.py                      # 39 tests — Types, schema, config
+├── test_data_layer.py                # 17 tests — SimulationTrace, results
+├── test_grammar_validation.py        # 22 tests — Grammar validation utilities
+├── test_justification_checker.py     #  4 tests — Justification checking
+├── test_minimality_examples.py       #  3 tests — Example regression tests
+├── test_minimality_scorer.py         #  6 tests — Score computation
+├── test_minimality_validator.py      #  5 tests — End-to-end minimality
+├── test_parser.py                    # 19 tests — Lark parser
+├── test_rule_inference.py            # 21 tests — Tree/forest extraction, export
+├── test_rule_validation.py           # 41 tests — Evaluation, selection, reports
+├── test_semantic.py                  # 30 tests — Consistency, contradiction, overfitting
+└── test_validators.py                # 30 tests — Base, preparse, structure, bounds
 ```
 
 ## Files
 
-### `test_change_extractor.py` — Change Detection Tests
+### `test_core.py` — Core Types, Schema, Config (39 tests)
 
-Tests the `ChangeExtractor` component with 9 tests across 2 test classes:
+Tests `core/types.py`, `core/schema.py`, and `core/config.py`:
+- `Relation`, `Conjunction`, `Disjunction` construction and string representations
+- Operator normalisation (`<=` → `<=`, `≤` → `<=`)
+- `RuleSchema` validation (valid variables, operators, variable bounds)
+- `DEFAULT_ADS_CONFIG` integration
+- Edge cases: empty rules, unknown operators, nested structures
 
-**`TestChangeExtraction`:**
-- Tightening detection for `<` operators (negative delta)
-- Tightening detection for `>` operators (positive delta)
-- Loosening detection for both operator types
+### `test_config_and_logging.py` — Config Loader & Logging (20 tests)
+
+Tests `core/config_loader.py` and `core/logging_config.py`:
+- YAML config loading from `config.yaml`
+- `ThresholdConfig`, `PipelineConfig` dataclass construction
+- `load_config()`, `load_pipeline_config()` roundtrips
+- `setup_logging()`, `get_logger()` with coloured output
+- Error handling for missing files, invalid YAML
+
+### `test_data_layer.py` — Data Layer (17 tests)
+
+Tests `data/simulation_trace.py`, `data/counterfactual_evidence.py`, `data/semantic_result.py`, `data/minimality_result.py`:
+- `SimulationTrace` and `SimulationDataset` construction
+- `CounterfactualEvidence` with perturbation and pair data
+- `SemanticValidationResult` aggregation
+- `MinimalityResult` scoring and verdict
+
+### `test_parser.py` — Lark Parser (19 tests)
+
+Tests `parsers/lark_parser.py`:
+- Simple and compound rule parsing
+- Arithmetic expressions, nested parentheses
+- Disjunction/conjunction precedence
+- Unicode operator normalisation
+- Expected parse failures for invalid syntax
+- Integration with `DEFAULT_ADS_CONFIG`
+
+### `test_validators.py` — Syntactic Validators (30 tests)
+
+Tests `validators/base.py`, `validators/preparse.py`, `validators/structure.py`, `validators/absolute_bounds.py`:
+- `BaseValidator` interface compliance
+- Pre-parse character/pattern rejection
+- Structure depth, width, nesting limits
+- Absolute bounds checking against `RuleSchema` variable ranges
+- Boundary values (edge of valid range)
+- Disjunction-level validation
+
+### `test_grammar_validation.py` — Grammar Utilities (22 tests)
+
+Tests `shared/grammar_validation.py`:
+- `validate_rule_grammar()` on valid/invalid rule strings
+- `is_grammar_valid()` boolean wrapper
+- `extract_rule_components()` — variable names, operators, constants
+- `normalise_rule_text()` — whitespace/operator canonical form
+- Edge cases: empty strings, Unicode, very long rules
+
+### `test_semantic.py` — Semantic Validation (30 tests)
+
+Tests `semantic/consistency_checker.py`, `semantic/contradiction_checker.py`, `semantic/overfitting_detector.py`, `semantic/counterfactual_generator.py`, `semantic/semantic_validator.py`:
+- Consistency scores against simulation traces
+- Contradiction detection between rule pairs
+- Overfitting detection (rules with 100% false-positive rate)
+- Counterfactual generation from perturbation hints
+- `SemanticValidator` orchestrator end-to-end
+
+### `test_bound_analyzer.py` — Bound Severity (11 tests)
+
+Tests `minimality/bound_analyzer.py`:
+- Tightening severity for upper/lower bounds
+- Loosening returns zero severity
+- Unknown variable fallback behaviour
+- Percentage change calculation
+- Severity categorisation: minor, moderate, severe, extreme
+
+### `test_change_extractor.py` — Change Detection (16 tests)
+
+Tests `minimality/change_extractor.py`:
+- Tightening/loosening detection for `<`, `>`, `<=`, `>=`
 - No-change detection (identical rules)
 - Multiple simultaneous changes
+- Relation matching by `(variable, operator)`
+- Unmatched relations, operator flipping, magnitude computation
 
-**`TestRelationMatching`:**
-- Correct matching by `(variable, operator)`
-- Handling of unmatched relations (different variables)
-- Operator flipping for `Constant op Variable` patterns
-- Magnitude computation correctness
+### `test_justification_checker.py` — Justification (4 tests)
 
-### `test_bound_analyzer.py` — Severity Analysis Tests
-
-Tests the `BoundAnalyzer` component with 9 tests across 2 test classes:
-
-**`TestTighteningSeverity`:**
-- Upper bound tightening severity (example, `ego_speed < 30` → `< 1`)
-- Lower bound tightening severity
-- Loosening returns zero severity
-- No change returns zero severity
-- Clamping to [0, 1] range
-
-**`TestSeverityCategorization`:**
-- `minor` classification (< 0.1)
-- `moderate` classification (< 0.3)
-- `severe` classification (< 0.7)
-- `extreme` classification (≥ 0.7)
-
-### `test_justification_checker.py` — Justification Tests
-
-Tests the `JustificationChecker` component with 7 tests across 2 test classes:
-
-**`TestJustificationChecking`:**
+Tests `minimality/justification_checker.py`:
 - Justified when evidence clusters near refined value
 - Unjustified when evidence is far from refined value
-- Handling of no relevant counterfactuals
-- Handling of empty evidence
+- Empty evidence handling
 
-**`TestBoundaryAlignment`:**
-- Majority-near-bound detection
-- Direction alignment for tightenings
-- Multi-variable evidence handling
+### `test_minimality_scorer.py` — Scoring (6 tests)
 
-### `test_minimality_scorer.py` — Scoring Tests
-
-Tests the `MinimalityScorer` component with 7 tests across 2 test classes:
-
-**`TestScoreComputation`:**
-- Perfect score (1.0) for no changes
-- Perfect score (1.0) for all justified changes
+Tests `minimality/minimality_scorer.py`:
+- Perfect score (1.0) for no changes / all justified changes
 - Low score for unjustified high-magnitude tightenings
-- Moderate score for mixed justified/unjustified
-- Loosening not penalized in magnitude component
+- Mixed justified/unjustified scoring
+- Loosening not penalised
 
-**`TestWeightedScoring`:**
-- Custom weight behavior: emphasizing justification vs. magnitude produces different scores when the two components differ
+### `test_minimality_validator.py` — E2E Minimality (5 tests)
 
-### `test_minimality_validator.py` — End-to-End Pipeline Tests
-
-Tests the `MinimalityValidator` orchestrator with 6 tests across 2 test classes:
-
-**`TestEndToEndValidation`:**
+Tests `minimality/minimality_validator.py`:
 - Justified refinement passes minimality check
-- Unjustified refinement fails minimality check
+- Unjustified refinement fails
 - No-change rules always pass
-- Multiple changes with mixed justification
+- Missing evidence treated as unjustified
 
-**`TestValidationWithoutEvidence`:**
-- All changes treated as unjustified when no evidence is provided
+### `test_minimality_examples.py` — Example Regression (3 tests)
 
-### `test_minimality_examples.py` — Integration/Regression Tests
+Verifies the three scenarios from `examples/minimality_examples.py` produce expected score ranges.
 
-Tests the example scenarios from `examples/minimality_examples.py` with 8 tests across 3 test classes:
+### `test_rule_inference.py` — Rule Inference (21 tests)
 
-**`TestJustifiedTightening`:**
-- Score > 0.7. The justified tightening example passes the minimality threshold
+Tests `rule_inference/tree_extractor.py`, `rule_inference/forest_extractor.py`, `rule_inference/grammar_checker.py`, `rule_inference/rule_export.py`:
+- Decision tree path extraction at multiple depths
+- Random forest DNF extraction
+- Grammar checking of extracted rules
+- CSV export roundtrip
+- Edge cases: single-leaf trees, all-same labels
 
-**`TestUnjustifiedTightening`:**
-- Score < 0.7. The over-tightening example fails the threshold
-- Detects unjustified tightenings in the changes list
+### `test_rule_validation.py` — Rule Validation (41 tests)
 
-**`TestNoEvidence`:**
-- Without evidence, all changes are unjustified
-- Score reflects the lack of justification
+Tests `rule_validation/rule_evaluator.py`, `rule_validation/rule_selector.py`, `rule_validation/counterfactual_hints.py`, `rule_validation/validation_report.py`:
+- Per-rule TP/FP/TN/FN, decisiveness, FPR, FNR computation
+- Selection criteria (FPR ≥ 20%, FNR ≤ 5%)
+- Relaxed selection with ranking
+- L1-minimal perturbation computation
+- CSV and text report generation
+- `SelectionCriteria` dataclass configuration
 
-### `__init__.py`
+### `test_cbf_data.py` — CBF Data Layer (28 tests)
 
-Empty init file marking the `tests/` directory as a Python package (required for pytest discovery with the project's import structure).
+Tests `cbf_data/loader.py`, `cbf_data/metadata.py`, `cbf_data/adapter.py`:
+- Dataset loading from CSV files
+- Feature matrix extraction (`get_feature_matrix()`)
+- Paired comparison loading
+- System/feature metadata lookup
+- `cbf_to_semantic()` and `semantic_to_cbf()` roundtrip
+- `AVAILABLE_SYSTEMS` enumeration
+
+## Running Tests
+
+```bash
+# All tests
+python -m pytest
+
+# Single file
+python -m pytest tests/test_semantic.py -v
+
+# With coverage
+python -m pytest --cov=. --cov-report=term-missing
+
+# Using Makefile
+make test
+```
+
+## Test Configuration
+
+Configured in `pyproject.toml`:
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+```
 
 ## Dependencies
 
 - **`pytest`** — Test framework
-- **`pytest-cov`** (optional) — Coverage reporting
-- Internal: all `minimality/`, `data/`, `core/`, `parsers/` packages
+- **`pytest-cov`** — Coverage reporting
+- **Internal:** all production packages
