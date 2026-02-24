@@ -9,6 +9,7 @@ from core.schema import Rule
 from data.counterfactual_evidence import CounterfactualPair
 import numpy as np
 
+
 class CounterfactualGenerator:
     """Generates counterfactual inputs for overfitting detection.
     
@@ -17,13 +18,15 @@ class CounterfactualGenerator:
     re-executing the system."
     """
     
-    def __init__(self, simulator_callback=None):
+    def __init__(self, simulator_callback=None, seed: int = 42):
         """
         Args:
             simulator_callback: Function that takes input dict and returns outcome.
                                 If None, must provide outcomes manually.
+            seed: Random seed for reproducible counterfactual generation.
         """
         self.simulator_callback = simulator_callback
+        self._rng = np.random.RandomState(seed)
     
     def generate_counterfactual(
         self,
@@ -110,8 +113,8 @@ class CounterfactualGenerator:
         
         for _ in range(num_samples):
             # Distributed radius among variables
-            perturbations = np.random.dirichlet(np.ones(len(vars_list))) * radius
-            signs = np.random.choice([-1, 1], size=len(vars_list))
+            perturbations = self._rng.dirichlet(np.ones(len(vars_list))) * radius
+            signs = self._rng.choice([-1, 1], size=len(vars_list))
             
             candidate = center.copy()
             for i, var in enumerate(vars_list):

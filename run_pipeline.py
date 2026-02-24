@@ -1,7 +1,8 @@
 """
 Main pipeline: End-to-end rule inference and validation.
 
-Runs Group A (data loading) → Group B (rule inference) → Group C (validation & selection)
+Runs Group A (data loading) → Group B (rule inference) → Layer 1 (syntactic
+validation) → Group C (evaluation & selection) → Layer 2 (semantic validation)
 for all CBFKIT system configurations.
 
 Usage:
@@ -43,19 +44,62 @@ from rule_validation.validation_report import (
     generate_selection_report,
 )
 
+# ── Layer 1: Syntactic Validators ────────────────────────────────────
+from validators import PreParseValidator, StructureValidator, AbsoluteBoundValidator
+from parsers.lark_parser import OperationalRuleParser
+from core.config import GrammarConfig
 
-def run_pipeline(system: str, controller: str, output_dir: str = "output"):
+# ── Layer 2: Semantic Validator ──────────────────────────────────────
+from semantic import SemanticValidator
+from cbf_data.adapter import cbf_to_semantic
+
+
+def run_pipeline(system: str, controller: str, output_dir: str = "output",
+                 pipeline_cfg=None):
     """Run the full inference + validation pipeline for one system/controller.
 
     Args:
         system: e.g., "unicycle_static_obstacle"
         controller: e.g., "robust_evolved"
         output_dir: Base output directory.
+        pipeline_cfg: Optional PipelineConfig from YAML.  When supplied,
+                      overrides the hardcoded defaults.
     """
     out = Path(output_dir) / system / controller
     out.mkdir(parents=True, exist_ok=True)
 
     feature_names = STATIC_FEATURES if "static" in system else DYNAMIC_FEATURES
+
+    # ── Resolve parameters from config or defaults ───────────────────
+    if pipeline_cfg is not None:
+        cfg_t = pipeline_cfg.thresholds
+        dt_depths       = pipeline_cfg.dt_depths
+        dt_min_leaf     = pipeline_cfg.dt_min_samples_leaf
+        rf_n_est        = pipeline_cfg.rf_n_estimators
+        rf_max_depth    = pipeline_cfg.rf_max_depth
+        hc_n_est        = pipeline_cfg.hc_n_estimators
+        hc_max_depth    = pipeline_cfg.hc_max_depth
+        hc_min_conf     = pipeline_cfg.hc_min_confidence
+        hc_min_sup      = pipeline_cfg.hc_min_support
+        top_k           = pipeline_cfg.top_k
+        random_seed     = pipeline_cfg.random_seed
+        max_depth       = cfg_t.max_depth
+        max_predicates  = cfg_t.max_predicates
+        grammar_config  = pipeline_cfg.grammar
+    else:
+        dt_depths       = [2, 3, 4, 5, None]
+        dt_min_leaf     = 5
+        rf_n_est        = 100
+        rf_max_depth    = 4
+        hc_n_est        = 200
+        hc_max_depth    = 5
+        hc_min_conf     = 0.75
+        hc_min_sup      = 10
+        top_k           = 10
+        random_seed     = 42
+        max_depth       = 10
+        max_predicates  = 20
+        grammar_config  = None
 
     logger.info("=" * 70)
     logger.info("PIPELINE: %s / %s", system, controller)
@@ -93,19 +137,19 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     # Decision tree rules across multiple depths
     dt_candidates = sweep_depths(
         d_legacy,
-        depths=[2, 3, 4, 5, None],
-        min_samples_leaf=5,
-        random_state=42,
+        depths=dt_depths,
+        min_samples_leaf=dt_min_leaf,
+        random_state=random_seed,
     )
     logger.info("Decision tree candidates: %d", len(dt_candidates))
 
     # Random forest rules
     rf_candidates, rf_clf = extract_rules_from_forest(
         d_legacy,
-        n_estimators=100,
-        max_depth=4,
-        min_samples_leaf=5,
-        random_state=42,
+        n_estimators=rf_n_est,
+        max_depth=rf_max_depth,
+        min_samples_leaf=dt_min_leaf,
+        random_state=random_seed,
         top_k_trees=5,
     )
     logger.info("Random forest candidates: %d", len(rf_candidates))
@@ -113,11 +157,11 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     # High-confidence rules
     hc_candidates = extract_high_confidence_rules(
         d_legacy,
-        n_estimators=200,
-        max_depth=5,
-        random_state=42,
-        min_confidence=0.75,
-        min_support=10,
+        n_estimators=hc_n_est,
+        max_depth=hc_max_depth,
+        random_state=random_seed,
+        min_confidence=hc_min_conf,
+        min_support=hc_min_sup,
     )
     logger.info("High-confidence candidates: %d", len(hc_candidates))
 
@@ -171,6 +215,81 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     logger.debug("Inference report:\n%s", report)
 
     # ──────────────────────────────────────────────────────────────────────
+    # LAYER 1: Syntactic validation
+    # ──────────────────────────────────────────────────────────────────────
+    logger.info("[Layer 1] Running syntactic validation on %d candidates...",
+                len(unique_candidates))
+
+    feature_bounds = get_feature_bounds(system)
+
+    # Build grammar config for the parser (allow the system's variables)
+    if grammar_config is None:
+        grammar_config = GrammarConfig(
+            allowed_variables=set(feature_names),
+            variable_bounds=feature_bounds,
+        )
+
+    preparse_validator = PreParseValidator()
+    structure_validator = StructureValidator(
+        max_depth=max_depth, max_predicates=max_predicates,
+    )
+    bounds_validator = AbsoluteBoundValidator(feature_bounds)
+
+    try:
+        parser = OperationalRuleParser(grammar_config)
+    except Exception as e:
+        logger.warning("Could not initialise Lark parser: %s — skipping Layer 1 typed checks", e)
+        parser = None
+
+    l1_passed = []
+    l1_failed = 0
+    for cand in unique_candidates:
+        # Step 1: Pre-parse normalisation
+        norm_text, pp_warnings, pp_violations = preparse_validator.normalize_and_validate(
+            cand.rule_text,
+        )
+        for w in pp_warnings:
+            logger.debug("L1 preparse warning [%s]: %s", w.category, w.message)
+        if pp_violations:
+            logger.info("L1 REJECT (preparse): %s — %s", cand.rule_text,
+                        "; ".join(v.message for v in pp_violations))
+            l1_failed += 1
+            continue
+
+        # Step 2: Parse into typed Rule object (if parser available)
+        parsed_rule = None
+        if parser is not None:
+            parsed_rule, parse_errors = parser.parse_safe(norm_text)
+            if parsed_rule is None:
+                logger.debug("L1 parse skip: %s — %s", norm_text, parse_errors)
+                # Don't reject — the rule is still valid as text; just can't
+                # do typed checks.
+
+        # Step 3: Structure validation (only if parsed)
+        if parsed_rule is not None:
+            struct_violations = structure_validator.validate(parsed_rule)
+            if struct_violations:
+                logger.info("L1 REJECT (structure): %s — %s", cand.rule_text,
+                            "; ".join(v.message for v in struct_violations))
+                l1_failed += 1
+                continue
+
+            # Step 4: Absolute-bound validation
+            bound_violations = bounds_validator.validate(parsed_rule)
+            if bound_violations:
+                logger.info("L1 REJECT (bounds): %s — %s", cand.rule_text,
+                            "; ".join(v.message for v in bound_violations))
+                l1_failed += 1
+                continue
+
+        l1_passed.append(cand)
+
+    logger.info("[Layer 1] %d passed, %d rejected", len(l1_passed), l1_failed)
+
+    # Continue the pipeline with only Layer 1 passed candidates
+    unique_candidates = l1_passed
+
+    # ──────────────────────────────────────────────────────────────────────
     # GROUP C: Evaluate rules on D_evolved, select inconsistent rules
     # ──────────────────────────────────────────────────────────────────────
     logger.info("[Group C] Evaluating %d rules on D_evolved...", len(unique_candidates))
@@ -182,7 +301,7 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     logger.info("Evaluations exported to %s", eval_csv)
 
     # Select top-k inconsistent rules
-    selected = select_with_relaxed_criteria(evaluations, top_k=10)
+    selected = select_with_relaxed_criteria(evaluations, top_k=top_k)
     logger.info("Selected %d inconsistent rules for refinement", len(selected))
 
     # Export selected rules
@@ -190,7 +309,6 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     logger.info("Selected rules exported to %s", selected_csv)
 
     # Generate inconsistency examples + counterfactuals for each selected rule
-    feature_bounds = get_feature_bounds(system)
     all_examples = []
 
     for sr in selected:
@@ -224,6 +342,64 @@ def run_pipeline(system: str, controller: str, output_dir: str = "output"):
     sel_report_path.write_text(sel_report, encoding="utf-8")
     logger.info("Selection report saved to %s", sel_report_path)
     logger.debug("Selection report:\n%s", sel_report)
+
+    # ──────────────────────────────────────────────────────────────────────
+    # LAYER 2: Semantic validation on selected rules
+    # ──────────────────────────────────────────────────────────────────────
+    if selected:
+        logger.info("[Layer 2] Running semantic validation on %d selected rules...",
+                    len(selected))
+
+        # Convert cbf_data.SimulationDataset → data.SimulationDataset
+        # so the semantic layer can operate on the correct schema.
+        sem_dataset = cbf_to_semantic(d_evolved)
+
+        sem_config = None
+        if pipeline_cfg is not None:
+            sem_config = {
+                "consistency_threshold": pipeline_cfg.thresholds.consistency_threshold,
+                "overfitting_threshold": pipeline_cfg.thresholds.overfitting_risk_threshold,
+                "train_test_gap_threshold": pipeline_cfg.thresholds.train_test_gap,
+            }
+
+        semantic_results = []
+        for sr in selected:
+            ev = sr.evaluation
+            rule_set_type = ev.rule_type if ev.rule_type in ("Pass", "Fail") else "Pass"
+
+            sem_validator = SemanticValidator(
+                rule_set_type=rule_set_type,
+                variable_bounds=feature_bounds,
+            )
+
+            # Parse rule for semantic evaluation
+            parsed = None
+            if parser is not None:
+                parsed, _ = parser.parse_safe(ev.rule_text)
+
+            if parsed is not None:
+                result = sem_validator.validate(
+                    parsed,
+                    sem_dataset,
+                    config=sem_config,
+                )
+                semantic_results.append(result)
+                logger.info(
+                    "L2 %s: %s (consistency=%.2f, contradictions=%d, overfitting=%.2f)",
+                    "PASS" if result.passed_validation else "FAIL",
+                    ev.rule_text[:60],
+                    result.consistency_score,
+                    len(result.contradictions),
+                    result.overfitting_risk,
+                )
+
+        # Export semantic results as JSON
+        if semantic_results:
+            import json
+            sem_out = [r.to_dict() for r in semantic_results]
+            sem_path = out / "semantic_validation.json"
+            sem_path.write_text(json.dumps(sem_out, indent=2), encoding="utf-8")
+            logger.info("Semantic validation results saved to %s", sem_path)
 
     logger.info("=" * 70)
     logger.info("PIPELINE COMPLETE: %s / %s", system, controller)
@@ -278,6 +454,7 @@ def main() -> None:
     )
 
     # ── Optional YAML config ─────────────────────────────────────────
+    pipeline_cfg = None
     if args.config:
         from core.config_loader import load_pipeline_config
         try:
@@ -297,17 +474,17 @@ def main() -> None:
 
     # ── Run ──────────────────────────────────────────────────────────
     if args.system and args.controller:
-        run_pipeline(args.system, args.controller, args.output_dir)
+        run_pipeline(args.system, args.controller, args.output_dir, pipeline_cfg)
     elif args.system:
         # Run all controllers for this system
         for sys_name, ctrl in AVAILABLE_SYSTEMS:
             if sys_name == args.system:
-                run_pipeline(sys_name, ctrl, args.output_dir)
+                run_pipeline(sys_name, ctrl, args.output_dir, pipeline_cfg)
     else:
         # Run all
         for sys_name, ctrl in AVAILABLE_SYSTEMS:
             try:
-                run_pipeline(sys_name, ctrl, args.output_dir)
+                run_pipeline(sys_name, ctrl, args.output_dir, pipeline_cfg)
             except Exception as e:
                 logger.error("FAILED: %s/%s: %s", sys_name, ctrl, e, exc_info=True)
 

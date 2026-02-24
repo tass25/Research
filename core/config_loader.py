@@ -191,6 +191,29 @@ def load_pipeline_config(path: str) -> PipelineConfig:
 
     _default_depths = [2, 3, 4, 5, None]
 
+    # Apply environment variable overrides (ADS_*)
+    import os
+    for key, value in os.environ.items():
+        if key.startswith("ADS_"):
+            attr_name = key[4:].lower()
+            try:
+                if "." in value:
+                    val = float(value)
+                else:
+                    val = int(value)
+            except ValueError:
+                val = value
+                
+            if hasattr(thresholds, attr_name):
+                # Ensure type matching for thresholds
+                setattr(thresholds, attr_name, type(getattr(thresholds, attr_name))(val))
+            elif attr_name in ["dt_min_samples_leaf", "rf_n_estimators", "rf_max_depth", "hc_n_estimators", "hc_max_depth"]:
+                inf_raw[attr_name] = int(val)
+            elif attr_name in ["hc_min_confidence", "hc_min_support"]:
+                inf_raw[attr_name] = float(val)
+            elif attr_name in ["top_k", "random_seed"]:
+                raw[attr_name] = int(val)
+
     pipeline = PipelineConfig(
         grammar=grammar,
         thresholds=thresholds,
@@ -211,10 +234,30 @@ def load_pipeline_config(path: str) -> PipelineConfig:
 
 
 def load_config_from_dict(d: Dict[str, Any]) -> GrammarConfig:
-    """Build GrammarConfig from a dict (e.g. parsed from YAML section)."""
+    """Build GrammarConfig from a dict (e.g. parsed from YAML section).
+
+    Raises:
+        TypeError: If *d* is not a dict.
+        ValueError: If required keys are missing or malformed.
+    """
+    if not isinstance(d, dict):
+        raise TypeError(
+            f"Expected a dict for grammar config, got {type(d).__name__}: {d!r}"
+        )
     allowed = d.get("allowed_variables", [])
+    if not allowed or not isinstance(allowed, list):
+        raise ValueError("'allowed_variables' must be a non-empty list of strings")
+
     bounds_raw = d.get("variable_bounds", {})
-    bounds = {k: (float(v[0]), float(v[1])) for k, v in bounds_raw.items()}
+    if not isinstance(bounds_raw, dict):
+        raise ValueError("'variable_bounds' must be a mapping of variable → [min, max]")
+
+    bounds: Dict[str, Tuple[float, float]] = {}
+    for k, v in bounds_raw.items():
+        if not isinstance(v, (list, tuple)) or len(v) != 2:
+            raise ValueError(f"Bounds for '{k}' must be [min, max], got {v}")
+        bounds[k] = (float(v[0]), float(v[1]))
+
     return GrammarConfig(allowed_variables=set(allowed), variable_bounds=bounds)
 
 

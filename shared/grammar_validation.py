@@ -49,7 +49,11 @@ _ALLOWED_PARENS = frozenset({"(", ")"})
 
 
 def _tokenize_rule(rule_text: str) -> List[str]:
-    """Split a rule text into tokens, preserving multi-character operators."""
+    """Split a rule text into tokens, preserving multi-character operators.
+
+    Negative numbers (e.g. ``-5.0``) are kept as single tokens when the
+    minus sign is not preceded by a number or variable token.
+    """
     text = rule_text
     # Pad multi-char operators first
     text = text.replace("<=", " <= ").replace(">=", " >= ").replace("!=", " != ")
@@ -58,7 +62,38 @@ def _tokenize_rule(rule_text: str) -> List[str]:
     text = re.sub(r'(?<![<>!])=(?!=)', r' = ', text)
     # Pad parentheses
     text = text.replace("(", " ( ").replace(")", " ) ")
-    return [t for t in text.split() if t]
+    raw_tokens = [t for t in text.split() if t]
+
+    # Merge a standalone '-' with the following numeric token to form
+    # a negative number when the '-' is not preceded by a value token.
+    merged: List[str] = []
+    i = 0
+    while i < len(raw_tokens):
+        tok = raw_tokens[i]
+        if tok == "-" and i + 1 < len(raw_tokens):
+            # Check if next token is a number
+            try:
+                float(raw_tokens[i + 1])
+                is_next_num = True
+            except ValueError:
+                is_next_num = False
+            # Only merge if not preceded by a number or variable (i.e. subtraction)
+            prev_is_value = False
+            if merged:
+                prev = merged[-1]
+                try:
+                    float(prev)
+                    prev_is_value = True
+                except ValueError:
+                    if re.match(r'^[a-z_][a-z0-9_]*$', prev):
+                        prev_is_value = True
+            if is_next_num and not prev_is_value:
+                merged.append(f"-{raw_tokens[i + 1]}")
+                i += 2
+                continue
+        merged.append(tok)
+        i += 1
+    return merged
 
 
 # ── Core validation ─────────────────────────────────────────────────────
@@ -167,6 +202,13 @@ def validate_rule(
                     f"Grammar G allows only simple comparisons (var rop const)."
                 )
 
+    # Check for '-' used as subtraction (variable_or_number - number_or_variable)
+    if re.search(r'[a-z0-9_]\s+-\s+[a-z0-9_]', rule_text, re.IGNORECASE):
+        warnings.append(
+            "Possible arithmetic operator '-' found. "
+            "Grammar G allows only simple comparisons (var rop const)."
+        )
+
     # ── complexity warning ───────────────────────────────────────────
     if n_predicates > 10:
         warnings.append(
@@ -192,6 +234,31 @@ _PREDICATE_RE = re.compile(
 )
 
 
+def _strip_outer_parens(text: str) -> str:
+    """Remove matched outer parenthesis pairs, one at a time.
+
+    Unlike ``str.strip('()')``, this only removes parens that truly
+    wrap the entire string as a balanced pair.
+    """
+    s = text.strip()
+    while s.startswith("(") and s.endswith(")"):
+        depth = 0
+        matched = True
+        for i, ch in enumerate(s):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+            if depth == 0 and i < len(s) - 1:
+                matched = False
+                break
+        if matched:
+            s = s[1:-1].strip()
+        else:
+            break
+    return s
+
+
 def validate_dnf(rule_text: str) -> Tuple[bool, str]:
     """Verify the rule is in proper DNF (disjunction of conjunctions).
 
@@ -215,10 +282,10 @@ def validate_dnf(rule_text: str) -> Tuple[bool, str]:
     or_parts = re.split(r'\s+OR\s+', rule_text)
 
     for i, clause in enumerate(or_parts):
-        clause = clause.strip().strip("()")
+        clause = _strip_outer_parens(clause.strip())
         and_parts = re.split(r'\s+AND\s+', clause)
         for part in and_parts:
-            part = part.strip().strip("()")
+            part = _strip_outer_parens(part.strip())
             if not _PREDICATE_RE.match(part.strip()):
                 return False, (
                     f"Clause {i + 1}, predicate '{part}' is not a simple "

@@ -5,7 +5,7 @@ Validates complexity bounds (depth, predicate count) to ensure
 verification tractability and human reviewability.
 """
 
-from core.schema import Rule, Relation, Conjunction, Disjunction
+from core.schema import Rule, Relation, Conjunction, Disjunction, BinaryExpr
 from validators.base import ValidationViolation
 
 
@@ -43,6 +43,9 @@ class StructureValidator:
         """
         violations = []
 
+        if rule is None:
+            raise TypeError("Rule cannot be None")
+
         depth = self._depth(rule)
         if depth > self.max_depth:
             violations.append(
@@ -69,6 +72,8 @@ class StructureValidator:
         """Compute maximum nesting depth."""
         if isinstance(node, Relation):
             return d
+        if isinstance(node, BinaryExpr):
+            return max(self._depth(node.left, d + 1), self._depth(node.right, d + 1))
         if isinstance(node, Conjunction):
             return max((self._depth(item, d + 1) for item in node.items), default=d)
         if isinstance(node, Disjunction):
@@ -79,6 +84,8 @@ class StructureValidator:
         """Count total number of relational predicates."""
         if isinstance(node, Relation):
             return 1
+        if isinstance(node, BinaryExpr):
+            return self._count(node.left) + self._count(node.right)
         if isinstance(node, Conjunction):
             return sum(self._count(item) for item in node.items)
         if isinstance(node, Disjunction):

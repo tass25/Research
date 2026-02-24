@@ -62,6 +62,11 @@ class MinimalityValidator:
         Returns:
             MinimalityResult with complete analysis
         """
+        if original_rule is None:
+            raise TypeError("original_rule cannot be None")
+        if refined_rule is None:
+            raise TypeError("refined_rule cannot be None")
+
         # Step 1: Extract changes
         changes = self.change_extractor.extract_changes(
             original_rule, refined_rule

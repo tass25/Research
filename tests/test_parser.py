@@ -127,3 +127,43 @@ class TestParserEdgeCases:
         rule = parser.parse("ego_speed > 0")
         assert rule.evaluate({"ego_speed": 1.0}) is True
         assert rule.evaluate({"ego_speed": 0.0}) is False
+
+
+class TestParserArithmetic:
+    """Test that Lark parser accepts arithmetic expressions.
+    
+    The Lark grammar allows arithmetic (+, -, *, /) inside comparisons,
+    even though grammar_validation.py issues warnings for these. This is
+    by design: the parser is permissive to handle real-world LLM outputs.
+    """
+
+    def test_addition_in_comparison(self, parser):
+        rule = parser.parse("ego_speed + 5 > 20")
+        assert rule is not None
+        assert isinstance(rule, Disjunction)
+
+    def test_subtraction_in_comparison(self, parser):
+        rule = parser.parse("dist_front - 2 > 3")
+        assert rule is not None
+
+    def test_multiplication_in_comparison(self, parser):
+        rule = parser.parse("ego_speed * 2 > 50")
+        assert rule is not None
+
+    def test_division_in_comparison(self, parser):
+        rule = parser.parse("dist_front / 10 > 1")
+        assert rule is not None
+
+    def test_arithmetic_produces_binary_expr(self, parser):
+        from core.schema import BinaryExpr
+        rule = parser.parse("ego_speed + 5 > 20")
+        # Root is Disjunction → item is Relation → left is BinaryExpr
+        rel = rule.items[0]
+        assert isinstance(rel, Relation)
+        assert isinstance(rel.left, BinaryExpr)
+
+    def test_arithmetic_and_normal_conjunction(self, parser):
+        rule = parser.parse("(ego_speed + 5 > 20) AND (dist_front < 10)")
+        assert rule is not None
+        assert rule.evaluate is not None
+

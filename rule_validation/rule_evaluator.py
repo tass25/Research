@@ -100,9 +100,9 @@ def _evaluate_predicate(pred: Dict, features: Dict[str, float]) -> bool:
     elif op == ">=":
         return val >= thresh
     elif op == "=":
-        return abs(val - thresh) < 1e-9
+        return val == thresh
     elif op == "!=":
-        return abs(val - thresh) >= 1e-9
+        return val != thresh
     return False
 
 
