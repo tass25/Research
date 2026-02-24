@@ -1,6 +1,5 @@
-# ─── Grammar Enforcement Pipeline Configuration ──────────────────────────
-# SEAMS 2026 — Operational Rule Validation
-# Copy this file and adjust thresholds for your system.
+
+#  adjust thresholds for your system.
 # ──────────────────────────────────────────────────────────────────────────
 
 grammar:

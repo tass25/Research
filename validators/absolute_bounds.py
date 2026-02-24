@@ -6,7 +6,7 @@ defined by the Operational Design Domain (ODD).
 """
 
 from typing import Dict, List, Tuple
-from core.schema import Rule, Relation, Conjunction, Disjunction, Variable, Constant
+from core.schema import Rule, Relation, Conjunction, Disjunction, Variable, Constant, BinaryExpr
 from validators.base import ValidationViolation
 
 
@@ -43,6 +43,9 @@ class AbsoluteBoundValidator:
         """
         violations = []
 
+        if rule is None:
+            raise TypeError("Rule cannot be None")
+
         for rel in self._relations(rule):
             # Check: Variable op Constant
             if isinstance(rel.left, Variable) and isinstance(rel.right, Constant):
@@ -51,6 +54,12 @@ class AbsoluteBoundValidator:
             # Check: Constant op Variable
             if isinstance(rel.left, Constant) and isinstance(rel.right, Variable):
                 self._check(rel.right.name, rel.left.value, violations, rel)
+
+            # Check constants inside BinaryExpr nodes
+            for side in (rel.left, rel.right):
+                if isinstance(side, BinaryExpr):
+                    for var, val in self._extract_var_const_pairs(side):
+                        self._check(var, val, violations, rel)
 
         return violations
 
@@ -78,3 +87,21 @@ class AbsoluteBoundValidator:
         if isinstance(node, Disjunction):
             return sum((self._relations(item) for item in node.items), [])
         return []
+
+    @staticmethod
+    def _extract_var_const_pairs(node):
+        """Recursively extract (variable_name, constant_value) pairs from BinaryExpr."""
+        pairs = []
+        if isinstance(node, Variable):
+            return pairs  # no constant to check
+        if isinstance(node, Constant):
+            return pairs  # no associated variable context
+        if isinstance(node, BinaryExpr):
+            pairs.extend(AbsoluteBoundValidator._extract_var_const_pairs(node.left))
+            pairs.extend(AbsoluteBoundValidator._extract_var_const_pairs(node.right))
+            # If one side is Variable and other is Constant, pair them
+            if isinstance(node.left, Variable) and isinstance(node.right, Constant):
+                pairs.append((node.left.name, node.right.value))
+            if isinstance(node.right, Variable) and isinstance(node.left, Constant):
+                pairs.append((node.right.name, node.left.value))
+        return pairs

@@ -168,7 +168,7 @@ class ChangeExtractor:
         Returns:
             "tightening" | "loosening" | "unchanged"
         """
-        if abs(delta) < 1e-9:  # Floating point tolerance
+        if delta == 0.0:  # Exact evaluation semantics aligned with system AST
             return "unchanged"
         
         if operator in [RelOp.LT, RelOp.LE]:

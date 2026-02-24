@@ -150,14 +150,10 @@ class TestChangeClassification:
         assert change_type == "loosening"
     
     def test_unchanged(self, extractor):
-        """Test unchanged (delta near zero)."""
+        """Test unchanged (exact 0.0 delta)."""
         from core.types import RelOp
         
         change_type = extractor._classify_change(RelOp.LT, 0.0)
-        assert change_type == "unchanged"
-        
-        # Very small delta
-        change_type = extractor._classify_change(RelOp.LT, 1e-10)
         assert change_type == "unchanged"
 
 

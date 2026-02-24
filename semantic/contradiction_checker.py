@@ -4,10 +4,14 @@ Contradiction checker for semantic validation.
 Detects contradictions between current and historical rules.
 """
 
+import logging
+import random
 from typing import List, Tuple, Dict, Set
 from core.schema import Rule
 from data.semantic_result import ContradictionIssue
-import random
+
+logger = logging.getLogger(__name__)
+
 
 class ContradictionChecker:
     """Detects contradictions between current and historical rules.
@@ -15,6 +19,14 @@ class ContradictionChecker:
     From paper: "No contradictions - there is no (x, y) such that a pass rule
     and a fail rule both hold on x."
     """
+
+    def __init__(self, seed: int = 42):
+        """Initialize with a reproducible random seed.
+        
+        Args:
+            seed: Random seed for test point generation (default 42).
+        """
+        self._rng = random.Random(seed)
     
     def check_contradictions(
         self,
@@ -30,9 +42,26 @@ class ContradictionChecker:
             - Evaluate current_rule
             - Evaluate all historical rules
             - Check if any opposite-type rule also holds
-        2. Return contradictions
+        2. Return contradictions (deduplicated by rule pair)
+        
+        Args:
+            current_rule: The rule being validated.
+            current_rule_type: "Pass" or "Fail".
+            historical_rules: Existing rules to check against.
+            test_points: Input vectors to evaluate.
+            
+        Raises:
+            ValueError: If current_rule_type is not "Pass" or "Fail".
         """
+        if current_rule_type not in ("Pass", "Fail"):
+            raise ValueError(
+                f"current_rule_type must be 'Pass' or 'Fail', got '{current_rule_type}'"
+            )
+
         contradictions = []
+        # Track which (current, historical) pairs already have a reported
+        # contradiction to avoid N duplicate reports for the same pair.
+        seen_pairs: set = set()
         
         for test_point in test_points:
             try:
@@ -48,6 +77,11 @@ class ContradictionChecker:
                 if hist_type == current_rule_type:
                     continue  # Same type, not a contradiction
                 
+                # Deduplicate: only report first witness per rule pair
+                pair_key = (str(current_rule), str(hist_rule))
+                if pair_key in seen_pairs:
+                    continue
+
                 try:
                     hist_holds = hist_rule.evaluate(test_point)
                 except KeyError:
@@ -55,6 +89,7 @@ class ContradictionChecker:
                 
                 if hist_holds:
                     # CONTRADICTION FOUND!
+                    seen_pairs.add(pair_key)
                     contradictions.append(ContradictionIssue(
                         current_rule=str(current_rule),
                         historical_rule=str(hist_rule),
@@ -72,16 +107,25 @@ class ContradictionChecker:
     ) -> List[Dict[str, float]]:
         """Generate random test points for contradiction checking.
         
-        Uses random sampling within variable bounds.
+        Uses seeded random sampling within variable bounds.
+        Variables without bounds generate a warning and use range [-10, 10].
         """
         points = []
+        # Warn about unbound variables once
+        unbound = variables - set(bounds.keys())
+        if unbound:
+            logger.warning(
+                "Variables %s have no bounds defined — using default range [-10, 10]",
+                sorted(unbound),
+            )
+
         for _ in range(num_points):
             point = {}
             for var in variables:
                 if var in bounds:
                     min_val, max_val = bounds[var]
-                    point[var] = random.uniform(min_val, max_val)
+                    point[var] = self._rng.uniform(min_val, max_val)
                 else:
-                    point[var] = 0.0 # Default fallback
+                    point[var] = self._rng.uniform(-10.0, 10.0)
             points.append(point)
         return points
