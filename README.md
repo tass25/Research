@@ -5,9 +5,9 @@ A Python-based system for strictly enforcing operational design domain (ODD) rul
 ## Overview
 
 When LLMs generate or refine operational safety rules for autonomous driving, they frequently introduce:
-- **Syntactic errors** — Unicode artifacts, hidden characters, malformed operators
-- **Semantic inconsistencies** — Rules that contradict simulation data or existing rules
-- **Overly conservative refinements** — Bounds tightened far beyond what evidence justifies
+- **Syntactic errors** : Unicode artifacts, hidden characters, malformed operators
+- **Semantic inconsistencies** : Rules that contradict simulation data or existing rules
+- **Overly conservative refinements** : Bounds tightened far beyond what evidence justifies
 
 This project implements a **multi-layered validation pipeline** that catches these issues systematically.
 
@@ -107,7 +107,7 @@ This project implements a **multi-layered validation pipeline** that catches the
 │   ├── minimality_validator.py #  Pipeline orchestrator
 │   └── __init__.py            #   Re-exports all minimality classes
 │
-├── cbf_data/                   # Group A — CBFKIT data integration
+├── cbf_data/                   # Group A : CBFKIT data integration
 │   ├── loader.py              #   SimulationDataset, load_dataset(), PairedComparison
 │   ├── metadata.py            #   System/feature metadata, physical bounds
 │   ├── adapter.py             #   Bidirectional converter: cbf_data ↔ semantic data layer
@@ -116,14 +116,14 @@ This project implements a **multi-layered validation pipeline** that catches the
 │       ├── unicycle_static_obstacle/{robust_evolved,robust_vanilla}/
 │       └── unicycle_dynamic_obstacle/{robust_evolved,robust_vanilla}/
 │
-├── rule_inference/             # Group B — ML-based rule extraction
+├── rule_inference/             # Group B : ML-based rule extraction
 │   ├── tree_extractor.py      #   Decision tree path → DNF rules, depth sweep
 │   ├── forest_extractor.py    #   Random forest top-k tree extraction
 │   ├── grammar_checker.py     #   Thin wrapper → shared.grammar_validation
 │   ├── rule_export.py         #   CSV export and inference reports
 │   └── __init__.py            #   Package init
 │
-├── rule_validation/            # Group C — Rule evaluation & selection
+├── rule_validation/            # Group C : Rule evaluation & selection
 │   ├── rule_evaluator.py      #   Decisiveness, FPR, FNR on D_evolved
 │   ├── rule_selector.py       #   Top-k inconsistent rule selection
 │   ├── counterfactual_hints.py #  L1-minimal perturbation candidates
@@ -297,7 +297,7 @@ python -m pytest tests/test_minimality_scorer.py -v
 
 | Term | Definition |
 |------|-----------|
-| **ODD** | Operational Design Domain — physical/logical limits on variables |
+| **ODD** | Operational Design Domain : physical/logical limits on variables |
 | **Tightening** | Making a bound more restrictive (e.g., `< 30` → `< 25`) |
 | **Loosening** | Making a bound less restrictive (e.g., `< 30` → `< 35`) |
 | **Counterfactual** | Minimally-modified input that flips the rule verdict |
@@ -305,8 +305,8 @@ python -m pytest tests/test_minimality_scorer.py -v
 | **R_Pass / R_Fail** | Rule sets: conditions for passing vs. failing scenarios |
 | **D_legacy** | Simulation runs from the legacy (vanilla) controller |
 | **D_evolved** | Simulation runs from the evolved (CBF) controller |
-| **Decisiveness** | $D_G = 1 - N_{\text{mismatch}} / N$ — fraction of non-contradicted predictions |
-| **DNF** | Disjunctive Normal Form — OR of ANDs of relational predicates |
+| **Decisiveness** | $D_G = 1 - N_{\text{mismatch}} / N$ : fraction of non-contradicted predictions |
+| **DNF** | Disjunctive Normal Form : OR of ANDs of relational predicates |
 
 ## Dependencies
 
@@ -331,7 +331,7 @@ Rules use a Python-like syntax supporting:
 - **Logic:** `∧` / `AND` (conjunction), `∨` / `OR` (disjunction)
 
 > [!NOTE]
-> **Grammar design decision:** The Lark parser (`grammar/rules.lark`) accepts arithmetic expressions for permissive LLM output handling, while `shared/grammar_validation.py` validates against the paper's grammar G (no arithmetic) and issues warnings. This is deliberate — the parser is permissive, the grammar validator is strict.
+> **Grammar design decision:** The Lark parser (`grammar/rules.lark`) accepts arithmetic expressions for permissive LLM output handling, while `shared/grammar_validation.py` validates against the paper's grammar G (no arithmetic) and issues warnings. This is deliberate : the parser is permissive, the grammar validator is strict.
 
 **Example:**
 ```
